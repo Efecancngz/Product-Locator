@@ -64,5 +64,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create dummy .env for validation
+        run: touch backend/.env
+
       - name: Validate docker-compose.yml syntax
         run: docker compose config --quiet
