@@ -1,0 +1,73 @@
+# =========================
+# Python / Backend
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/env/
+venv/
+env/
+.venv/
+backend/.env
+backend/*.env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.local
+backend_debug.log
+*.log
+*.db
+*.sqlite
+
+# =========================
+# Node / Frontend
+# =========================
+node_modules/
+dist/
+dist-ssr/
+*.local
+frontend/.env
+frontend/*.env
+frontend/.env.*.local
+.eslintcache
+
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDEs / Editors
+# =========================
+.vscode/
+.idea/
+*.swp
+
+# =========================
+# Debug / Temp Artifacts
+# =========================
+debug_*.html
+debug_*.json
+debug_*.py
+**/debug_dumps/
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+
+# Dev-only scripts (not part of production)
+backend/auto_fix_json.py
+backend/extract_search.py
+backend/test_5_categories.py
+backend/test_ai_parser.py
+backend/test_city_match.py
+backend/test_search.py
+backend/test_result.json
+backend/backend/

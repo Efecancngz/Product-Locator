@@ -1,0 +1,1256 @@
+{
+    "Teknosa": {
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul AVM",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "Cevahir": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Cevahir AVM",
+            "lat": 41.0632,
+            "lng": 28.9895
+        },
+        "İstinyePark": {
+            "city": "İstanbul",
+            "district": "Sarıyer",
+            "address": "İstinyePark AVM",
+            "lat": 41.1136,
+            "lng": 29.0592
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "Capacity": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Capacity AVM",
+            "lat": 41.0019,
+            "lng": 28.8718
+        },
+        "Marmara Forum": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Marmara Forum AVM",
+            "lat": 40.9875,
+            "lng": 28.8396
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "Viaport": {
+            "city": "İstanbul",
+            "district": "Pendik",
+            "address": "Viaport AVM",
+            "lat": 40.9123,
+            "lng": 29.2345
+        },
+        "Özdilek Park": {
+            "city": "İstanbul",
+            "district": "Levent",
+            "address": "Özdilek Park",
+            "lat": 41.0802,
+            "lng": 29.0113
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall AVM",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Gordion": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "Gordion AVM",
+            "lat": 39.9183,
+            "lng": 32.7328
+        },
+        "Armada": {
+            "city": "Ankara",
+            "district": "Söğütözü",
+            "address": "Armada AVM",
+            "lat": 39.9121,
+            "lng": 32.8023
+        },
+        "Cepa": {
+            "city": "Ankara",
+            "district": "Çankaya",
+            "address": "Cepa AVM",
+            "lat": 39.8867,
+            "lng": 32.8012
+        },
+        "Optimum İzmir": {
+            "city": "İzmir",
+            "district": "Gaziemir",
+            "address": "Optimum Outlet AVM",
+            "lat": 38.3731,
+            "lng": 27.1305
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova AVM",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "Agora İzmir": {
+            "city": "İzmir",
+            "district": "Balçova",
+            "address": "Agora AVM",
+            "lat": 38.3918,
+            "lng": 27.0571
+        },
+        "Mavibahçe": {
+            "city": "İzmir",
+            "district": "Karşıyaka",
+            "address": "Mavibahçe AVM",
+            "lat": 38.4627,
+            "lng": 27.0847
+        },
+        "Antalya Migros": {
+            "city": "Antalya",
+            "district": "Muratpaşa",
+            "address": "Antalya Migros AVM",
+            "lat": 36.8887,
+            "lng": 30.7029
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity AVM",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Nilüfer": {
+            "city": "Bursa",
+            "district": "Nilüfer",
+            "address": "Carrefour Bursa",
+            "lat": 40.2155,
+            "lng": 28.9108
+        },
+        "Osmangazi": {
+            "city": "Bursa",
+            "district": "Osmangazi",
+            "address": "Osmangazi Şubesi",
+            "lat": 40.1824,
+            "lng": 29.0502
+        },
+        "Alsancak": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Kıbrıs Şehitleri Cad. No:9A",
+            "lat": 38.4382,
+            "lng": 27.1418
+        },
+        "Konak Hatay": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "İnönü Cad. No: 185",
+            "lat": 38.4055,
+            "lng": 27.1120
+        }
+    },
+    "Vatan Bilgisayar": {
+        "Kadıköy": {
+            "city": "İstanbul",
+            "district": "Kadıköy",
+            "address": "Bağdat Cad. No: 364",
+            "lat": 40.9923,
+            "lng": 29.0308
+        },
+        "Şişli": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Halaskargazi Cad. No: 249",
+            "lat": 41.0572,
+            "lng": 28.9875
+        },
+        "Beylikdüzü": {
+            "city": "İstanbul",
+            "district": "Beylikdüzü",
+            "address": "Beylikdüzü Migros AVM",
+            "lat": 41.0028,
+            "lng": 28.6446
+        },
+        "Bakırköy": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Bakırköy Şubesi",
+            "lat": 40.9799,
+            "lng": 28.8777
+        },
+        "Maltepe": {
+            "city": "İstanbul",
+            "district": "Maltepe",
+            "address": "Maltepe Şubesi",
+            "lat": 40.9347,
+            "lng": 29.1555
+        },
+        "Ümraniye": {
+            "city": "İstanbul",
+            "district": "Ümraniye",
+            "address": "Meydan AVM",
+            "lat": 41.0170,
+            "lng": 29.1096
+        },
+        "Esenyurt": {
+            "city": "İstanbul",
+            "district": "Esenyurt",
+            "address": "Esenyurt Şubesi",
+            "lat": 41.0333,
+            "lng": 28.6735
+        },
+        "Çankaya": {
+            "city": "Ankara",
+            "district": "Çankaya",
+            "address": "Atatürk Bulvarı No: 127",
+            "lat": 39.9179,
+            "lng": 32.8539
+        },
+        "Kızılay": {
+            "city": "Ankara",
+            "district": "Çankaya",
+            "address": "Kızılay Şubesi",
+            "lat": 39.9199,
+            "lng": 32.8543
+        },
+        "Eryaman": {
+            "city": "Ankara",
+            "district": "Etimesgut",
+            "address": "Eryaman Şubesi",
+            "lat": 39.9558,
+            "lng": 32.6451
+        },
+        "Konak": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Konak Pier AVM",
+            "lat": 38.4275,
+            "lng": 27.1329
+        },
+        "Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Bornova Şubesi",
+            "lat": 38.4628,
+            "lng": 27.2199
+        },
+        "Karşıyaka": {
+            "city": "İzmir",
+            "district": "Karşıyaka",
+            "address": "Karşıyaka Şubesi",
+            "lat": 38.4559,
+            "lng": 27.1229
+        },
+        "Lara": {
+            "city": "Antalya",
+            "district": "Muratpaşa",
+            "address": "Lara Şubesi",
+            "lat": 36.8549,
+            "lng": 30.7456
+        },
+        "Osmangazi": {
+            "city": "Bursa",
+            "district": "Osmangazi",
+            "address": "Osmangazi Şubesi",
+            "lat": 40.1824,
+            "lng": 29.0502
+        }
+    },
+    "MediaMarkt": {
+        "Carousel": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Carousel AVM",
+            "lat": 40.9927,
+            "lng": 28.8714
+        },
+        "Marmara Park": {
+            "city": "İstanbul",
+            "district": "Beylikdüzü",
+            "address": "Marmara Park AVM",
+            "lat": 41.0010,
+            "lng": 28.6500
+        },
+        "Optimum": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Optimum AVM",
+            "lat": 40.9968,
+            "lng": 29.1234
+        },
+        "Watergarden": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Watergarden",
+            "lat": 40.9951,
+            "lng": 29.1156
+        },
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "Forum Ankara": {
+            "city": "Ankara",
+            "district": "Etimesgut",
+            "address": "Forum Ankara AVM",
+            "lat": 39.9476,
+            "lng": 32.6890
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall AVM",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "Antalya Migros": {
+            "city": "Antalya",
+            "district": "Muratpaşa",
+            "address": "Migros AVM",
+            "lat": 36.8887,
+            "lng": 30.7029
+        },
+        "Korupark": {
+            "city": "Bursa",
+            "district": "Nilüfer",
+            "address": "Korupark AVM",
+            "lat": 40.2342,
+            "lng": 28.8654
+        },
+        "İzmir Park": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Eşrefpaşa Cad. No:408",
+            "lat": 38.4065,
+            "lng": 27.1235
+        }
+    },
+    "Arçelik": {
+        "Kadıköy": {
+            "city": "İstanbul",
+            "district": "Kadıköy",
+            "address": "Kadıköy Şubesi",
+            "lat": 40.9881,
+            "lng": 29.0253
+        },
+        "Bakırköy": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Bakırköy Şubesi",
+            "lat": 40.9799,
+            "lng": 28.8777
+        },
+        "Beşiktaş": {
+            "city": "İstanbul",
+            "district": "Beşiktaş",
+            "address": "Beşiktaş Şubesi",
+            "lat": 41.0422,
+            "lng": 29.0056
+        },
+        "Şişli": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Şişli Şubesi",
+            "lat": 41.0602,
+            "lng": 28.9872
+        },
+        "Ümraniye": {
+            "city": "İstanbul",
+            "district": "Ümraniye",
+            "address": "Ümraniye Şubesi",
+            "lat": 41.0169,
+            "lng": 29.0895
+        },
+        "Kızılay": {
+            "city": "Ankara",
+            "district": "Çankaya",
+            "address": "Kızılay Şubesi",
+            "lat": 39.9199,
+            "lng": 32.8543
+        },
+        "Çankaya": {
+            "city": "Ankara",
+            "district": "Çankaya",
+            "address": "Çankaya Şubesi",
+            "lat": 39.9179,
+            "lng": 32.8539
+        },
+        "Konak": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Konak Şubesi",
+            "lat": 38.4192,
+            "lng": 27.1287
+        },
+        "Alsancak": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Alsancak Şubesi",
+            "lat": 38.4341,
+            "lng": 27.1426
+        },
+        "Lara": {
+            "city": "Antalya",
+            "district": "Muratpaşa",
+            "address": "Lara Şubesi",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Osmangazi": {
+            "city": "Bursa",
+            "district": "Osmangazi",
+            "address": "Osmangazi Şubesi",
+            "lat": 40.1886,
+            "lng": 29.0610
+        }
+    },
+    "Vestel": {
+        "Kadıköy": {
+            "city": "İstanbul",
+            "district": "Kadıköy",
+            "address": "Kadıköy Şubesi",
+            "lat": 40.9881,
+            "lng": 29.0253
+        },
+        "Bakırköy": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Bakırköy Şubesi",
+            "lat": 40.9799,
+            "lng": 28.8777
+        },
+        "Şişli": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Şişli Şubesi",
+            "lat": 41.0602,
+            "lng": 28.9872
+        },
+        "Çankaya": {
+            "city": "Ankara",
+            "district": "Çankaya",
+            "address": "Çankaya Şubesi",
+            "lat": 39.9179,
+            "lng": 32.8539
+        },
+        "Konak": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Konak Şubesi",
+            "lat": 38.4192,
+            "lng": 27.1287
+        },
+        "Lara": {
+            "city": "Antalya",
+            "district": "Muratpaşa",
+            "address": "Lara Şubesi",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Osmangazi": {
+            "city": "Bursa",
+            "district": "Osmangazi",
+            "address": "Osmangazi Şubesi",
+            "lat": 40.1886,
+            "lng": 29.0610
+        }
+    },
+    "Flo": {
+        "Capacity": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Capacity AVM",
+            "lat": 41.0019,
+            "lng": 28.8718
+        },
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "Cevahir": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Cevahir AVM",
+            "lat": 41.0632,
+            "lng": 28.9895
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "Kadıköy": {
+            "city": "İstanbul",
+            "district": "Kadıköy",
+            "address": "Kadıköy",
+            "lat": 40.9881,
+            "lng": 29.0253
+        },
+        "Cepa": {
+            "city": "Ankara",
+            "district": "Çankaya",
+            "address": "Cepa AVM",
+            "lat": 39.8867,
+            "lng": 32.8012
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Gordion": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "Gordion AVM",
+            "lat": 39.9183,
+            "lng": 32.7328
+        },
+        "Optimum İzmir": {
+            "city": "İzmir",
+            "district": "Gaziemir",
+            "address": "Optimum AVM",
+            "lat": 38.3731,
+            "lng": 27.1305
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Korupark": {
+            "city": "Bursa",
+            "district": "Nilüfer",
+            "address": "Korupark AVM",
+            "lat": 40.2342,
+            "lng": 28.8654
+        }
+    },
+    "LC Waikiki": {
+        "Şişli": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Trump AVM",
+            "lat": 41.0805,
+            "lng": 29.0117
+        },
+        "Cevahir": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Cevahir AVM",
+            "lat": 41.0632,
+            "lng": 28.9895
+        },
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "Marmara Forum": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Marmara Forum",
+            "lat": 40.9875,
+            "lng": 28.8396
+        },
+        "Gordion": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "Gordion AVM",
+            "lat": 39.9183,
+            "lng": 32.7328
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Armada": {
+            "city": "Ankara",
+            "district": "Söğütözü",
+            "address": "Armada AVM",
+            "lat": 39.9121,
+            "lng": 32.8023
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "Optimum İzmir": {
+            "city": "İzmir",
+            "district": "Gaziemir",
+            "address": "Optimum AVM",
+            "lat": 38.3731,
+            "lng": 27.1305
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Korupark": {
+            "city": "Bursa",
+            "district": "Nilüfer",
+            "address": "Korupark AVM",
+            "lat": 40.2342,
+            "lng": 28.8654
+        }
+    },
+    "Koton": {
+        "Kanyon": {
+            "city": "İstanbul",
+            "district": "Levent",
+            "address": "Kanyon AVM",
+            "lat": 41.0778,
+            "lng": 29.0131
+        },
+        "Cevahir": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Cevahir AVM",
+            "lat": 41.0632,
+            "lng": 28.9895
+        },
+        "İstinyePark": {
+            "city": "İstanbul",
+            "district": "Sarıyer",
+            "address": "İstinyePark",
+            "lat": 41.1136,
+            "lng": 29.0592
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Armada": {
+            "city": "Ankara",
+            "district": "Söğütözü",
+            "address": "Armada AVM",
+            "lat": 39.9121,
+            "lng": 32.8023
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Korupark": {
+            "city": "Bursa",
+            "district": "Nilüfer",
+            "address": "Korupark AVM",
+            "lat": 40.2342,
+            "lng": 28.8654
+        }
+    },
+    "Boyner": {
+        "Zorlu Center": {
+            "city": "İstanbul",
+            "district": "Beşiktaş",
+            "address": "Zorlu Center",
+            "lat": 41.0669,
+            "lng": 29.0178
+        },
+        "Kanyon": {
+            "city": "İstanbul",
+            "district": "Levent",
+            "address": "Kanyon AVM",
+            "lat": 41.0778,
+            "lng": 29.0131
+        },
+        "İstinyePark": {
+            "city": "İstanbul",
+            "district": "Sarıyer",
+            "address": "İstinyePark",
+            "lat": 41.1136,
+            "lng": 29.0592
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Armada": {
+            "city": "Ankara",
+            "district": "Söğütözü",
+            "address": "Armada AVM",
+            "lat": 39.9121,
+            "lng": 32.8023
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Konak Pier": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Konak Pier AVM",
+            "lat": 38.4275,
+            "lng": 27.1329
+        }
+    },
+    "DeFacto": {
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "Cevahir": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Cevahir AVM",
+            "lat": 41.0632,
+            "lng": 28.9895
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "Marmara Forum": {
+            "city": "İstanbul",
+            "district": "Bakırköy",
+            "address": "Marmara Forum",
+            "lat": 40.9875,
+            "lng": 28.8396
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Gordion": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "Gordion",
+            "lat": 39.9183,
+            "lng": 32.7328
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "Optimum İzmir": {
+            "city": "İzmir",
+            "district": "Gaziemir",
+            "address": "Optimum",
+            "lat": 38.3731,
+            "lng": 27.1305
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        }
+    },
+    "Decathlon": {
+        "Meydan": {
+            "city": "İstanbul",
+            "district": "Ümraniye",
+            "address": "Meydan AVM",
+            "lat": 41.0170,
+            "lng": 29.1096
+        },
+        "Marmara Park": {
+            "city": "İstanbul",
+            "district": "Beylikdüzü",
+            "address": "Marmara Park AVM",
+            "lat": 41.0010,
+            "lng": 28.6500
+        },
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "Axis": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Axis AVM",
+            "lat": 40.9878,
+            "lng": 29.1234
+        },
+        "IKEA Ankara": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "IKEA Ankara yanı",
+            "lat": 39.9647,
+            "lng": 32.6854
+        },
+        "Gordion": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "Gordion",
+            "lat": 39.9183,
+            "lng": 32.7328
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Korupark": {
+            "city": "Bursa",
+            "district": "Nilüfer",
+            "address": "Korupark AVM",
+            "lat": 40.2342,
+            "lng": 28.8654
+        }
+    },
+    "Nike": {
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "Kanyon": {
+            "city": "İstanbul",
+            "district": "Levent",
+            "address": "Kanyon AVM",
+            "lat": 41.0778,
+            "lng": 29.0131
+        },
+        "İstinyePark": {
+            "city": "İstanbul",
+            "district": "Sarıyer",
+            "address": "İstinyePark",
+            "lat": 41.1136,
+            "lng": 29.0592
+        },
+        "Zorlu Center": {
+            "city": "İstanbul",
+            "district": "Beşiktaş",
+            "address": "Zorlu Center",
+            "lat": 41.0669,
+            "lng": 29.0178
+        },
+        "Armada": {
+            "city": "Ankara",
+            "district": "Söğütözü",
+            "address": "Armada AVM",
+            "lat": 39.9121,
+            "lng": 32.8023
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        }
+    },
+    "Adidas": {
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "Kanyon": {
+            "city": "İstanbul",
+            "district": "Levent",
+            "address": "Kanyon AVM",
+            "lat": 41.0778,
+            "lng": 29.0131
+        },
+        "İstinyePark": {
+            "city": "İstanbul",
+            "district": "Sarıyer",
+            "address": "İstinyePark",
+            "lat": 41.1136,
+            "lng": 29.0592
+        },
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        }
+    },
+    "Gratis": {
+        "Cevahir": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Cevahir AVM",
+            "lat": 41.0632,
+            "lng": 28.9895
+        },
+        "Forum İstanbul": {
+            "city": "İstanbul",
+            "district": "Bayrampaşa",
+            "address": "Forum İstanbul",
+            "lat": 41.0423,
+            "lng": 28.9101
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "Kadıköy": {
+            "city": "İstanbul",
+            "district": "Kadıköy",
+            "address": "Kadıköy",
+            "lat": 40.9881,
+            "lng": 29.0253
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Gordion": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "Gordion",
+            "lat": 39.9183,
+            "lng": 32.7328
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "Optimum İzmir": {
+            "city": "İzmir",
+            "district": "Gaziemir",
+            "address": "Optimum",
+            "lat": 38.3731,
+            "lng": 27.1305
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Korupark": {
+            "city": "Bursa",
+            "district": "Nilüfer",
+            "address": "Korupark AVM",
+            "lat": 40.2342,
+            "lng": 28.8654
+        },
+        "Alsancak": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Kıbrıs Şehitleri Cad.",
+            "lat": 38.4382,
+            "lng": 27.1418
+        }
+    },
+    "Watsons": {
+        "Cevahir": {
+            "city": "İstanbul",
+            "district": "Şişli",
+            "address": "Cevahir AVM",
+            "lat": 41.0632,
+            "lng": 28.9895
+        },
+        "İstinyePark": {
+            "city": "İstanbul",
+            "district": "Sarıyer",
+            "address": "İstinyePark",
+            "lat": 41.1136,
+            "lng": 29.0592
+        },
+        "Mall of İstanbul": {
+            "city": "İstanbul",
+            "district": "Başakşehir",
+            "address": "Mall of İstanbul",
+            "lat": 41.0630,
+            "lng": 28.8037
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        },
+        "TerraCity": {
+            "city": "Antalya",
+            "district": "Lara",
+            "address": "TerraCity",
+            "lat": 36.8623,
+            "lng": 30.7542
+        },
+        "Konak Pier": {
+            "city": "İzmir",
+            "district": "Konak",
+            "address": "Konak Pier AVM",
+            "lat": 38.4275,
+            "lng": 27.1329
+        }
+    },
+    "Sephora": {
+        "İstinyePark": {
+            "city": "İstanbul",
+            "district": "Sarıyer",
+            "address": "İstinyePark",
+            "lat": 41.1136,
+            "lng": 29.0592
+        },
+        "Zorlu Center": {
+            "city": "İstanbul",
+            "district": "Beşiktaş",
+            "address": "Zorlu Center",
+            "lat": 41.0669,
+            "lng": 29.0178
+        },
+        "Kanyon": {
+            "city": "İstanbul",
+            "district": "Levent",
+            "address": "Kanyon AVM",
+            "lat": 41.0778,
+            "lng": 29.0131
+        },
+        "Akasya": {
+            "city": "İstanbul",
+            "district": "Ataşehir",
+            "address": "Akasya AVM",
+            "lat": 41.0004,
+            "lng": 29.0988
+        },
+        "ANKAmall": {
+            "city": "Ankara",
+            "district": "Yenimahalle",
+            "address": "ANKAmall",
+            "lat": 39.9697,
+            "lng": 32.7582
+        },
+        "Forum Bornova": {
+            "city": "İzmir",
+            "district": "Bornova",
+            "address": "Forum Bornova",
+            "lat": 38.4666,
+            "lng": 27.2204
+        }
+    },
+    "Hepsiburada": {
+        "Online": {
+            "city": "Online",
+            "district": "",
+            "address": "Online Mağaza",
+            "lat": 41.0082,
+            "lng": 28.9784
+        }
+    },
+    "Trendyol": {
+        "Online": {
+            "city": "Online",
+            "district": "",
+            "address": "Online Mağaza",
+            "lat": 41.0082,
+            "lng": 28.9784
+        }
+    }
+}
