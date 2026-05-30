@@ -101,7 +101,16 @@ Standart fiyat karşılaştırma motorlarının (Akakçe, Cimri vb.) aksine **Pr
 | Fallback Parse | BeautifulSoup4 | Yedek parser |
 | Validation | Pydantic v2 | Request/Response doğrulama |
 | Veritabanı | MongoDB + Motor | Çift Modlu (MongoDB / In-Memory Fallback) Önbellekleme & Dinamik SaaS Yönetimi |
+| Önbellek | Redis 8 (hiredis) | Milisaniye altı arama sonucu önbellekleme, TTL & LRU eviction |
+| Kimlik Doğrulama | Firebase Admin SDK | JWT token doğrulama, Google/Email giriş, admin rol koruması |
 | Bildirim Mikroservisi | ReportSystem (Java 17 / Javalin) | Çok kanallı bildirim hattı (Telegram, E-posta, SMS, WhatsApp) REST API üzerinden |
+
+### DevOps & CI/CD
+
+| Bileşen | Teknoloji | Amaç |
+|---|---|---|
+| CI Pipeline | GitHub Actions | Her push/PR'da otomatik pytest, Vite build, docker-compose doğrulama |
+| Container | Docker Compose | Çoklu servis orkestrasyonu (Backend, Frontend, MongoDB, Redis, ReportSystem) |
 
 ### Frontend
 

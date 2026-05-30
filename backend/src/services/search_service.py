@@ -30,15 +30,27 @@ class SearchService:
         """
         logger.info(f"[SearchService] Searching for: {query} (city={city}, district={district})")
         
-        # 1. Caching Layer Check (MongoDB / In-Memory Fallback)
+        # 1. Caching Layer Check — Redis first, then MongoDB fallback
+        from src.services.redis_service import redis_service
         from src.services.db_service import db_service
+
+        # Try Redis (sub-millisecond)
+        try:
+            cached_data = await redis_service.get_cached_search(query, city, district)
+            if cached_data:
+                logger.info(f"[SearchService] Redis cache HIT for query: '{query}'")
+                return SearchResult.model_validate(cached_data)
+        except Exception as redis_err:
+            logger.error(f"[SearchService] Redis cache read failed: {redis_err}")
+
+        # Try MongoDB (fallback)
         try:
             cached_data = await db_service.get_cached_search(query, city, district)
             if cached_data:
-                logger.info(f"[SearchService] Returning cached result for query: '{query}'")
+                logger.info(f"[SearchService] MongoDB cache HIT for query: '{query}'")
                 return SearchResult.model_validate(cached_data)
         except Exception as cache_err:
-            logger.error(f"[SearchService] Failed to read from cache: {cache_err}")
+            logger.error(f"[SearchService] MongoDB cache read failed: {cache_err}")
             
         try:
             # Use orchestrator with 180 second timeout (scraping + AI parsing takes time)
@@ -190,11 +202,15 @@ class SearchService:
             total_found=len(enriched_products)
         )
         
-        # 2. Caching Layer Store
+        # 2. Caching Layer Store — Redis (fast) + MongoDB (persistent)
+        try:
+            await redis_service.cache_search(query, city, district, result_to_return.model_dump())
+        except Exception as redis_err:
+            logger.error(f"[SearchService] Redis cache write failed: {redis_err}")
         try:
             await db_service.cache_search(query, city, district, result_to_return.model_dump())
         except Exception as cache_err:
-            logger.error(f"[SearchService] Failed to write to cache: {cache_err}")
+            logger.error(f"[SearchService] MongoDB cache write failed: {cache_err}")
             
         return result_to_return
     

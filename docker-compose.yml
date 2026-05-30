@@ -13,10 +13,12 @@ services:
       - DB_NAME=product_locator
       - ENV=production
       - REPORT_SYSTEM_URL=http://report-system:8080
+      - REDIS_URL=redis://redis:6379
     env_file:
       - ./backend/.env
     depends_on:
       - mongodb
+      - redis
       - report-system
     networks:
       - app-network
@@ -44,6 +46,18 @@ services:
     networks:
       - app-network
 
+  # Redis — High-performance cache layer
+  redis:
+    image: redis:alpine
+    container_name: product-locator-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    networks:
+      - app-network
+
   # ReportSystem — Java notification microservice (Telegram, Email, SMS, WhatsApp)
   # Source: https://github.com/Efecancngz/ReportSystem
   # For production, replace 'build' with 'image: ghcr.io/efecancngz/report-system:latest'
@@ -63,4 +77,5 @@ networks:
 
 volumes:
   mongo-data:
+  redis-data:
 
