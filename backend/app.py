@@ -113,7 +113,9 @@ app.include_router(admin.router, prefix="/api/v1")
 @app.on_event("startup")
 async def startup_db_client():
     from src.services.db_service import db_service
+    from src.services.redis_service import redis_service
     await db_service.connect()
+    await redis_service.connect()
 
 
 @app.get("/", tags=["health"], summary="Server Health Check")

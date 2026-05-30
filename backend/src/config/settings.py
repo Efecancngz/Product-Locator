@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     # ReportSystem Integration
     REPORT_SYSTEM_URL: str = "http://localhost:8080"
 
+    # Redis Cache
+    REDIS_URL: str = "redis://localhost:6379"
+
+    # Firebase Authentication
+    FIREBASE_PROJECT_ID: str = ""
+    FIREBASE_CREDENTIALS_PATH: str = ""  # Optional: path to service account JSON
+
     class Config:
         env_file = ".env"
 

@@ -1,13 +1,15 @@
 """
 SaaS Dynamic Stores Admin Routes
 Provides CRUD endpoints to manage retail stores, selectors, and categories.
+Protected by Firebase Authentication (permissive mode when unconfigured).
 """
-from fastapi import APIRouter, HTTPException, Path, status
+from fastapi import APIRouter, HTTPException, Path, status, Depends
 from typing import List
 from src.models.store import StoreConfigModel
 from src.services.db_service import db_service
+from src.middleware.auth import require_admin
 
-router = APIRouter(tags=["admin"])
+router = APIRouter(tags=["admin"], dependencies=[Depends(require_admin)])
 
 @router.get(
     "/admin/stores",
@@ -339,6 +341,10 @@ async def system_health():
     from src.services.report_service import ReportService
     rs_health = await ReportService.check_report_system_health()
     rs_status = rs_health.get("status", "offline")
+
+    # 5. Redis cache health check
+    from src.services.redis_service import redis_service
+    redis_health = await redis_service.health_check()
     
     return {
         "status": "healthy" if db_status == "connected" and gemini_status == "active" else "degraded",
@@ -346,6 +352,7 @@ async def system_health():
             "status": db_status,
             "latency_ms": db_latency
         },
+        "redis": redis_health,
         "gemini": {
             "status": gemini_status
         },

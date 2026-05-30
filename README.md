@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-1.1.0-blue?style=flat-square" />
+  <img src="https://github.com/Efecancngz/Product-Locator/actions/workflows/ci.yml/badge.svg" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
   <img src="https://img.shields.io/badge/python-3.11+-yellow?style=flat-square&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/react-19-61DAFB?style=flat-square&logo=react&logoColor=white" />
@@ -107,7 +108,16 @@ Unlike standard price comparison engines (such as Akakçe or Cimri) which primar
 | Fallback Scraper | BeautifulSoup4 | Resilient selector-based secondary parser |
 | Validation | Pydantic v2 | Robust request/response schema parsing |
 | Database | MongoDB + Motor | Asynchronous caching & Dynamic Store configs (Dual-Mode Sync) |
+| Cache | Redis 8 (hiredis) | Sub-millisecond search result caching with TTL & LRU eviction |
+| Authentication | Firebase Admin SDK | JWT token verification, Google/Email sign-in, admin role guard |
 | Notification Microservice | ReportSystem (Java 17 / Javalin) | Multi-channel alerting pipeline (Telegram, Email, SMS, WhatsApp) via REST API |
+
+### DevOps & CI/CD
+
+| Component | Technology | Description |
+|---|---|---|
+| CI Pipeline | GitHub Actions | Automated pytest, Vite build, docker-compose validation on push/PR |
+| Containerization | Docker Compose | Multi-service orchestration (Backend, Frontend, MongoDB, Redis, ReportSystem) |
 
 ### Frontend
 
