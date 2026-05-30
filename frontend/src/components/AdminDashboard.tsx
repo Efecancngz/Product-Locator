@@ -4,7 +4,7 @@ import {
   ArrowLeft, Store, Plus, Trash2, Edit3, Globe, FolderOpen, 
   ExternalLink, X, Sparkles, Check, AlertCircle, Loader2, Search,
   Cpu, Database, Activity, Play, Terminal, Bell, Send, Mail, MessageCircle,
-  Settings2, CheckCircle2, XCircle
+  Settings2, CheckCircle2
 } from 'lucide-react'
 import { apiClient } from '../api/client'
 import { Button } from './ui/button'
@@ -92,6 +92,7 @@ export function AdminDashboard() {
   // Health Metrics State
   const [health, setHealth] = useState<{
     mongodb: { status: string; latency_ms: number };
+    redis?: { status: string; latency_ms: number; used_memory_mb?: number };
     gemini: { status: string };
     report_system?: { status: string };
     system: { cpu_load_percent: number };
@@ -467,6 +468,19 @@ export function AdminDashboard() {
               )}
             </div>
 
+            {/* Redis Cache Status */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl glass border border-border/40 text-xs">
+              <Database className="w-3.5 h-3.5 text-red-400" />
+              <span className="text-muted-foreground font-medium">Redis:</span>
+              {health ? (
+                <span className={`font-mono font-bold flex items-center gap-1.5 ${health.redis?.status === 'connected' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${health.redis?.status === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  {health.redis?.status === 'connected' ? `${health.redis.latency_ms}ms` : 'Offline'}
+                </span>
+              ) : (
+                <span className="text-muted-foreground/40 font-mono">pinging...</span>
+              )}
+            </div>
             {/* Gemini AI Status */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl glass border border-border/40 text-xs">
               <Activity className="w-3.5 h-3.5 text-purple-400" />
