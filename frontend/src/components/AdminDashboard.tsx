@@ -4,7 +4,7 @@ import {
   ArrowLeft, Store, Plus, Trash2, Edit3, Globe, FolderOpen, 
   ExternalLink, X, Sparkles, Check, AlertCircle, Loader2, Search,
   Cpu, Database, Activity, Play, Terminal, Bell, Send, Mail, MessageCircle,
-  Settings2, CheckCircle2, XCircle
+  Settings2, CheckCircle2
 } from 'lucide-react'
 import { apiClient } from '../api/client'
 import { Button } from './ui/button'
