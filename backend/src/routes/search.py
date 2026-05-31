@@ -25,18 +25,19 @@ async def search_products(
         ...,
         min_length=2,
         max_length=100,
-        description="Product query or brand (e.g., 'iPhone 15 Pro', 'Dyson V15')",
-        example="iPhone 15 Pro",
+        description="Search keyword (e.g., 'iPhone 15 Pro')",
     ),
     city: str = Query(
         None,
-        description="Optional city filter (e.g., 'İzmir', 'İstanbul', 'Ankara')",
-        example="İzmir",
+        description="Optional city filter (e.g., 'İzmir')",
     ),
     district: str = Query(
         None,
         description="Optional district filter — used when city parameter is supplied (e.g., 'Karşıyaka', 'Kadıköy')",
-        example="Karşıyaka",
+    ),
+    category: str = Query(
+        None,
+        description="Optional category to restrict the store search (e.g., 'electronics', 'clothing')",
     ),
 ):
     """
@@ -64,5 +65,5 @@ async def search_products(
     - Some retailer requests might be skipped due to aggressive Cloudflare or bot protection schemas.
     - Output represents instant, live scraped branch data — real-time availability.
     """
-    return await search_service.search_products(q, city, district)
+    return await search_service.search_products(q, city, district, category=category)
 
