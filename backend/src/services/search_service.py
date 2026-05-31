@@ -16,7 +16,7 @@ class SearchService:
     def __init__(self):
         pass  # Using singleton orchestrator
     
-    async def search_products(self, query: str, city: Optional[str] = None, district: Optional[str] = None) -> SearchResult:
+    async def search_products(self, query: str, city: Optional[str] = None, district: Optional[str] = None, category: Optional[str] = None) -> SearchResult:
         """
         Search for products using AI-powered orchestrator.
         
@@ -24,11 +24,12 @@ class SearchService:
             query: Product search query
             city: Optional city filter
             district: Optional district filter
+            category: Optional category filter
             
         Returns:
             SearchResult with found products
         """
-        logger.info(f"[SearchService] Searching for: {query} (city={city}, district={district})")
+        logger.info(f"[SearchService] Searching for: {query} (city={city}, district={district}, category={category})")
         
         # 1. Caching Layer Check — Redis first, then MongoDB fallback
         from src.services.redis_service import redis_service
@@ -36,7 +37,7 @@ class SearchService:
 
         # Try Redis (sub-millisecond)
         try:
-            cached_data = await redis_service.get_cached_search(query, city, district)
+            cached_data = await redis_service.get_cached_search(f"{query}_{category}" if category else query, city, district)
             if cached_data:
                 logger.info(f"[SearchService] Redis cache HIT for query: '{query}'")
                 return SearchResult.model_validate(cached_data)
@@ -45,7 +46,7 @@ class SearchService:
 
         # Try MongoDB (fallback)
         try:
-            cached_data = await db_service.get_cached_search(query, city, district)
+            cached_data = await db_service.get_cached_search(f"{query}_{category}" if category else query, city, district)
             if cached_data:
                 logger.info(f"[SearchService] MongoDB cache HIT for query: '{query}'")
                 return SearchResult.model_validate(cached_data)
@@ -55,7 +56,7 @@ class SearchService:
         try:
             # Use orchestrator with 180 second timeout (scraping + AI parsing takes time)
             raw_results = await asyncio.wait_for(
-                search_orchestrator.search(query, city, district),
+                search_orchestrator.search(query, city, district, category),
                 timeout=180.0
             )
             logger.info(f"[SearchService] Orchestrator returned {len(raw_results)} raw results")
@@ -77,6 +78,33 @@ class SearchService:
             except Exception as e:
                 logger.error(f"[SearchService] Failed to map item: {e}")
                 continue
+        
+        # --- Manual Products Integration ---
+        # Merge manually entered products (stores without websites) into the search results
+        try:
+            manual_results = await db_service.search_manual_products(query, city, category)
+            for mp in manual_results:
+                manual_product = ProductStock(
+                    product_name=mp.get("product_name", ""),
+                    price=mp.get("price"),
+                    currency=mp.get("currency", "TRY"),
+                    stock_status=StockStatus.IN_STOCK if mp.get("in_stock", True) else StockStatus.OUT_OF_STOCK,
+                    store_location=StoreLocation(
+                        store_name=mp.get("store_name", "Manuel Mağaza"),
+                        city=mp.get("city", ""),
+                        district=mp.get("district"),
+                        branch=mp.get("branch", ""),
+                        address=mp.get("address"),
+                        latitude=mp.get("latitude"),
+                        longitude=mp.get("longitude"),
+                    ),
+                    source_url=f"manual-entry:{mp.get('id', '')}"
+                )
+                all_products.append(manual_product)
+            if manual_results:
+                logger.info(f"[SearchService] Added {len(manual_results)} manual products to results")
+        except Exception as manual_err:
+            logger.error(f"[SearchService] Manual products search failed: {manual_err}")
         
         # Enrich with store coordinates and branch info
         from src.services.store_service import store_service
@@ -100,9 +128,20 @@ class SearchService:
             chain = product.store_location.store_name
             branch = product.store_location.branch
             
+            # Fuzzy match chain in city_stores_cache
+            matched_chain_key = None
+            chain_normalized = store_service._normalize_name(chain)
+            for cache_chain in city_stores_cache.keys():
+                cache_chain_norm = store_service._normalize_name(cache_chain)
+                if cache_chain_norm == chain_normalized or \
+                   chain_normalized in cache_chain_norm or \
+                   cache_chain_norm in chain_normalized:
+                    matched_chain_key = cache_chain
+                    break
+            
             # If we have city stores for this chain and no specific branch
-            if chain in city_stores_cache and city_stores_cache[chain]:
-                stores_in_city = city_stores_cache[chain]
+            if matched_chain_key and city_stores_cache[matched_chain_key]:
+                stores_in_city = city_stores_cache[matched_chain_key]
                 
                 # If district is specified, filter by district first
                 # If district is specified, filter by district first
@@ -137,11 +176,14 @@ class SearchService:
                         enriched_products.append(product_copy)
                         logger.debug(f"[SearchService] Created branch copy: {chain} - {store.get('branch')}")
                 else:
-                    # Product has specific branch info, try to enrich with coordinates
+                    # Product has specific branch info, try to enrich with coordinates (fuzzy branch name matching)
                     matched = False
+                    branch_normalized = store_service._normalize_name(branch)
                     for store in stores_in_city:
-                        if store_service._normalize_name(store.get("branch", "")) == \
-                           store_service._normalize_name(branch):
+                        store_branch_norm = store_service._normalize_name(store.get("branch", ""))
+                        if store_branch_norm == branch_normalized or \
+                           branch_normalized in store_branch_norm or \
+                           store_branch_norm in branch_normalized:
                             product.store_location.latitude = store.get("lat")
                             product.store_location.longitude = store.get("lng")
                             product.store_location.address = store.get("address", "")
@@ -204,11 +246,11 @@ class SearchService:
         
         # 2. Caching Layer Store — Redis (fast) + MongoDB (persistent)
         try:
-            await redis_service.cache_search(query, city, district, result_to_return.model_dump())
+            await redis_service.cache_search(f"{query}_{category}" if category else query, city, district, result_to_return.model_dump())
         except Exception as redis_err:
             logger.error(f"[SearchService] Redis cache write failed: {redis_err}")
         try:
-            await db_service.cache_search(query, city, district, result_to_return.model_dump())
+            await db_service.cache_search(f"{query}_{category}" if category else query, city, district, result_to_return.model_dump())
         except Exception as cache_err:
             logger.error(f"[SearchService] MongoDB cache write failed: {cache_err}")
             
