@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   ArrowLeft, Store, Plus, Trash2, Edit3, Globe, FolderOpen, 
   ExternalLink, X, Sparkles, Check, AlertCircle, Loader2, Search,
   Cpu, Database, Activity, Play, Terminal, Bell, Send, Mail, MessageCircle,
-  Settings2, CheckCircle2
+  Settings2, CheckCircle2, MapPin, Package
 } from 'lucide-react'
 import { apiClient } from '../api/client'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import gsap from 'gsap'
+import { Map as PigeonMap, Marker as PigeonMarker } from 'pigeon-maps'
 
 // Define interfaces for store configuration
 export interface StoreSelectors {
@@ -83,6 +84,191 @@ export function AdminDashboard() {
   const [formNameSelector, setFormNameSelector] = useState('')
   const [formPriceSelector, setFormPriceSelector] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+
+  // ===== Manual Products Tab State =====
+  const [activeTab, setActiveTab] = useState<'stores' | 'manual'>('stores')
+
+  // Manual Products list / search / pagination
+  const [manualProducts, setManualProducts] = useState<any[]>([])
+  const [manualTotal, setManualTotal] = useState(0)
+  const [manualLoading, setManualLoading] = useState(false)
+  const [manualPage, setManualPage] = useState(1)
+  const [manualPerPage] = useState(10)
+  const [manualSearchQuery, setManualSearchQuery] = useState('')
+  const [manualCategory, setManualCategory] = useState('all')
+  const [manualCity, setManualCity] = useState('')
+
+  // Manual Product Form & Modal State
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false)
+  const [isManualEditMode, setIsManualEditMode] = useState(false)
+  const [manualSubmitting, setManualSubmitting] = useState(false)
+  const [manualFormError, setManualFormError] = useState<string | null>(null)
+
+  // Manual Product Form Fields
+  const [mpId, setMpId] = useState('')
+  const [mpProductName, setMpProductName] = useState('')
+  const [mpPrice, setMpPrice] = useState<string>('')
+  const [mpCurrency, setMpCurrency] = useState('TRY')
+  const [mpCategory, setMpCategory] = useState<'electronics' | 'appliances' | 'clothing' | 'sports' | 'cosmetics'>('electronics')
+  const [mpStoreName, setMpStoreName] = useState('')
+  const [mpBranch, setMpBranch] = useState('')
+  const [mpCity, setMpCity] = useState('İzmir')
+  const [mpDistrict, setMpDistrict] = useState('')
+  const [mpAddress, setMpAddress] = useState('')
+  const [mpLatitude, setMpLatitude] = useState<number | ''>('')
+  const [mpLongitude, setMpLongitude] = useState<number | ''>('')
+  const [mpInStock, setMpInStock] = useState(true)
+  const [mpNotes, setMpNotes] = useState('')
+
+  // Load manual products
+  const loadManualProducts = async () => {
+    try {
+      setManualLoading(true)
+      const params = new URLSearchParams()
+      if (manualCategory !== 'all') params.append('category', manualCategory)
+      if (manualCity.trim()) params.append('city', manualCity.trim())
+      if (manualSearchQuery.trim()) params.append('query', manualSearchQuery.trim())
+      params.append('page', manualPage.toString())
+      params.append('per_page', manualPerPage.toString())
+
+      const { data } = await apiClient.get(`/admin/manual-products?${params.toString()}`)
+      setManualProducts(data.products || [])
+      setManualTotal(data.total || 0)
+    } catch (err) {
+      console.error('Failed to load manual products:', err)
+    } finally {
+      setManualLoading(false)
+    }
+  }
+
+  // Load manual products on activeTab changes or query/filters changes
+  useEffect(() => {
+    if (activeTab === 'manual') {
+      loadManualProducts()
+    }
+  }, [activeTab, manualPage, manualCategory, manualCity, manualSearchQuery])
+
+  // Form handlers for Manual Product
+  const handleManualFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setManualFormError(null)
+
+    if (!mpProductName.trim()) {
+      setManualFormError('Ürün adı zorunludur.')
+      return
+    }
+    if (!mpStoreName.trim()) {
+      setManualFormError('Mağaza adı zorunludur.')
+      return
+    }
+    if (!mpCity.trim()) {
+      setManualFormError('Şehir zorunludur.')
+      return
+    }
+
+    const payload = {
+      product_name: mpProductName.trim(),
+      price: mpPrice !== '' ? parseFloat(mpPrice) : null,
+      currency: mpCurrency,
+      category: mpCategory,
+      store_name: mpStoreName.trim(),
+      branch: mpBranch.trim(),
+      city: mpCity.trim(),
+      district: mpDistrict.trim() || null,
+      address: mpAddress.trim() || null,
+      latitude: mpLatitude !== '' ? Number(mpLatitude) : null,
+      longitude: mpLongitude !== '' ? Number(mpLongitude) : null,
+      in_stock: mpInStock,
+      notes: mpNotes.trim() || null
+    }
+
+    try {
+      setManualSubmitting(true)
+      if (isManualEditMode) {
+        await apiClient.put(`/admin/manual-products/${mpId}`, payload)
+      } else {
+        await apiClient.post('/admin/manual-products', payload)
+      }
+      setIsManualModalOpen(false)
+      loadManualProducts()
+    } catch (err: any) {
+      console.error('Manual product submit failed:', err)
+      setManualFormError(err.response?.data?.detail || 'Ürün kaydedilemedi.')
+    } finally {
+      setManualSubmitting(false)
+    }
+  }
+
+  const handleEditManualProduct = (product: any) => {
+    setIsManualEditMode(true)
+    setMpId(product.id)
+    setMpProductName(product.product_name)
+    setMpPrice(product.price !== null && product.price !== undefined ? product.price.toString() : '')
+    setMpCurrency(product.currency || 'TRY')
+    setMpCategory(product.category)
+    setMpStoreName(product.store_name)
+    setMpBranch(product.branch || '')
+    setMpCity(product.city)
+    setMpDistrict(product.district || '')
+    setMpAddress(product.address || '')
+    setMpLatitude(product.latitude !== null && product.latitude !== undefined ? product.latitude : '')
+    setMpLongitude(product.longitude !== null && product.longitude !== undefined ? product.longitude : '')
+    setMpInStock(product.in_stock !== false)
+    setMpNotes(product.notes || '')
+    
+    setManualFormError(null)
+    setIsManualModalOpen(true)
+  }
+
+  const handleDeleteManualProduct = async (id: string) => {
+    if (!window.confirm('Bu manuel ürünü silmek istediğinize emin misiniz?')) {
+      return
+    }
+    try {
+      await apiClient.delete(`/admin/manual-products/${id}`)
+      loadManualProducts()
+    } catch (err) {
+      console.error('Failed to delete manual product:', err)
+      alert('Ürün silinemedi.')
+    }
+  }
+
+  const handleOpenAddManualModal = () => {
+    setIsManualEditMode(false)
+    setMpId('')
+    setMpProductName('')
+    setMpPrice('')
+    setMpCurrency('TRY')
+    setMpCategory('electronics')
+    setMpStoreName('')
+    setMpBranch('')
+    setMpCity('İzmir')
+    setMpDistrict('')
+    setMpAddress('')
+    setMpLatitude('')
+    setMpLongitude('')
+    setMpInStock(true)
+    setMpNotes('')
+    
+    setManualFormError(null)
+    setIsManualModalOpen(true)
+  }
+
+  // Dynamic Map center for the map picker inside Create/Edit Modal
+  const mapCenter: [number, number] = useMemo(() => {
+    if (mpLatitude !== '' && mpLongitude !== '') {
+      return [Number(mpLatitude), Number(mpLongitude)]
+    }
+    // Default to city centers
+    if (mpCity.toLowerCase().includes('ist')) return [41.0082, 28.9784]
+    if (mpCity.toLowerCase().includes('ank')) return [39.9334, 32.8597]
+    return [38.4237, 27.1428] // İzmir default
+  }, [mpLatitude, mpLongitude, mpCity])
+
+  const handleMapClick = ({ latLng }: { latLng: [number, number] }) => {
+    setMpLatitude(Number(latLng[0].toFixed(6)))
+    setMpLongitude(Number(latLng[1].toFixed(6)))
+  }
 
   // Refs for GSAP animation
   const gridBgRef = useRef<HTMLDivElement>(null)
@@ -536,18 +722,56 @@ export function AdminDashboard() {
             >
               <Bell className="w-4 h-4 mr-2" /> Bildirimler
             </Button>
-            <Button
-              onClick={handleOpenAddModal}
-              className="gradient-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-9 px-4 text-sm"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add Store
-            </Button>
+            {activeTab === 'stores' ? (
+              <Button
+                onClick={handleOpenAddModal}
+                className="gradient-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-9 px-4 text-sm"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add Store
+              </Button>
+            ) : (
+              <Button
+                onClick={handleOpenAddManualModal}
+                className="gradient-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-9 px-4 text-sm"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Ürün Ekle
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Panel Content */}
       <main ref={dashboardHeaderRef} className="container mx-auto px-4 pt-8 relative z-10 flex-1 flex flex-col gap-6">
+
+        {/* Sub-Navigation Tabs */}
+        <div className="flex gap-6 border-b border-border/40 pb-px">
+          <button
+            onClick={() => setActiveTab('stores')}
+            className={`flex items-center gap-2 pb-3 text-sm font-semibold tracking-tight transition-all relative
+              ${activeTab === 'stores' 
+                ? 'text-primary border-b-2 border-primary font-bold' 
+                : 'text-muted-foreground hover:text-foreground'
+              }
+            `}
+          >
+            <Store className="w-4 h-4" />
+            <span>🏪 E-Ticaret Mağazaları</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('manual')}
+            className={`flex items-center gap-2 pb-3 text-sm font-semibold tracking-tight transition-all relative
+              ${activeTab === 'manual' 
+                ? 'text-primary border-b-2 border-primary font-bold' 
+                : 'text-muted-foreground hover:text-foreground'
+              }
+            `}
+          >
+            <Package className="w-4 h-4" />
+            <span>📦 Manuel Stok Girişi</span>
+          </button>
+        </div>
 
         {/* ===== Notification Center Panel (Rapor & Bildirim Merkezi) ===== */}
         {showNotifPanel && (
@@ -684,7 +908,7 @@ export function AdminDashboard() {
                   Test Bildirimi Gönder
                 </Button>
                 {notifTestResult && (
-                  <span className={`text-xs font-medium animate-in fade-in duration-300 ${
+<span className={`text-xs font-medium animate-in fade-in duration-300 ${
                     notifTestResult.startsWith('✅') ? 'text-emerald-400' : notifTestResult.startsWith('⚠') ? 'text-amber-400' : 'text-red-400'
                   }`}>
                     {notifTestResult}
@@ -695,184 +919,362 @@ export function AdminDashboard() {
           </div>
         )}
 
-        
-        {/* Filters and Search Bar Container */}
-        <div className="glass-strong rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-lg">
-          {/* Category Pills */}
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
-            {['all', 'electronics', 'appliances', 'clothing', 'sports', 'cosmetics'].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-300 capitalize
-                  ${activeCategory === cat 
-                    ? 'gradient-primary text-white border-transparent shadow-md' 
-                    : 'glass text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 border-border/50'
-                  }
-                `}
-              >
-                {cat === 'all' ? 'All Stores' : cat}
-              </button>
-            ))}
-          </div>
+        {activeTab === 'stores' && (
+          <>
+            {/* Filters and Search Bar Container */}
+            <div className="glass-strong rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-lg">
+              {/* Category Pills */}
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                {['all', 'electronics', 'appliances', 'clothing', 'sports', 'cosmetics'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-300 capitalize
+                      ${activeCategory === cat 
+                        ? 'gradient-primary text-white border-transparent shadow-md' 
+                        : 'glass text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 border-border/50'
+                      }
+                    `}
+                  >
+                    {cat === 'all' ? 'All Stores' : cat}
+                  </button>
+                ))}
+              </div>
 
-          {/* Search bar inside admin */}
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search store brand..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-xs glass border-border/50 focus-visible:ring-primary focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent placeholder:text-muted-foreground/45"
-            />
-          </div>
-        </div>
-
-        {/* Dynamic Loading State */}
-        {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
-            <Loader2 className="animate-spin text-primary w-10 h-10 mb-4" />
-            <p className="text-muted-foreground text-sm font-medium">Fetching secure configurations...</p>
-          </div>
-        ) : error ? (
-          <div className="flex-1 flex items-center justify-center min-h-[300px]">
-            <div className="text-center glass-strong rounded-2xl p-8 max-w-md border-destructive/20 glow-danger">
-              <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-              <p className="text-lg font-bold mb-2">Connection Failure</p>
-              <p className="text-muted-foreground text-sm mb-4">{error}</p>
-              <Button variant="outline" size="sm" onClick={loadStores}>
-                Retry Connection
-              </Button>
+              {/* Search bar inside admin */}
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search store brand..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 text-xs glass border-border/50 focus-visible:ring-primary focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent placeholder:text-muted-foreground/45"
+                />
+              </div>
             </div>
-          </div>
-        ) : filteredStores.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] glass-strong rounded-2xl border-dashed border-border p-12">
-            <FolderOpen className="w-12 h-12 text-muted-foreground/30 mb-4" />
-            <p className="text-muted-foreground text-sm font-medium">No matching retail stores found.</p>
-            <p className="text-muted-foreground/50 text-xs mt-1">Add a new store dynamically using the 'Add Store' trigger.</p>
-          </div>
-        ) : (
-          /* Cards Grid */
-          <div ref={cardsGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredStores.map((store) => {
-              const catDesign = CATEGORY_STYLES[store.category] || {
-                bg: 'bg-muted border-border text-muted-foreground',
-                dot: 'bg-muted-foreground',
-                label: store.category
-              }
-              
-              return (
-                <div
-                  key={store.key}
-                  data-store-key={store.key}
-                  className={`store-card glass-strong rounded-2xl p-5 flex flex-col justify-between relative shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] hover:border-primary/20
-                    ${!store.enabled ? 'opacity-65 grayscale-[35%]' : ''}
-                  `}
-                >
-                  {/* Category Pill Tag */}
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border capitalize tracking-wider flex items-center gap-1.5 ${catDesign.bg}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${catDesign.dot}`} />
-                      {catDesign.label}
-                    </span>
-                    
-                    {/* Active/Passive Switcher Toggle */}
-                    <button
-                      onClick={() => handleToggleStore(store.key)}
-                      className={`w-11 h-6 rounded-full transition-colors duration-300 relative flex items-center px-1 cursor-pointer
-                        ${store.enabled ? 'gradient-primary glow-primary' : 'bg-muted border border-border'}
+
+            {/* Dynamic Loading State */}
+            {loading ? (
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                <Loader2 className="animate-spin text-primary w-10 h-10 mb-4" />
+                <p className="text-muted-foreground text-sm font-medium">Fetching secure configurations...</p>
+              </div>
+            ) : error ? (
+              <div className="flex-1 flex items-center justify-center min-h-[300px]">
+                <div className="text-center glass-strong rounded-2xl p-8 max-w-md border-destructive/20 glow-danger">
+                  <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+                  <p className="text-lg font-bold mb-2">Connection Failure</p>
+                  <p className="text-muted-foreground text-sm mb-4">{error}</p>
+                  <Button variant="outline" size="sm" onClick={loadStores}>
+                    Retry Connection
+                  </Button>
+                </div>
+              </div>
+            ) : filteredStores.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] glass-strong rounded-2xl border-dashed border-border p-12">
+                <FolderOpen className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                <p className="text-muted-foreground text-sm font-medium">No matching retail stores found.</p>
+                <p className="text-muted-foreground/50 text-xs mt-1">Add a new store dynamically using the 'Add Store' trigger.</p>
+              </div>
+            ) : (
+              /* Cards Grid */
+              <div ref={cardsGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredStores.map((store) => {
+                  const catDesign = CATEGORY_STYLES[store.category] || {
+                    bg: 'bg-muted border-border text-muted-foreground',
+                    dot: 'bg-muted-foreground',
+                    label: store.category
+                  }
+                  
+                  return (
+                    <div
+                      key={store.key}
+                      data-store-key={store.key}
+                      className={`store-card glass-strong rounded-2xl p-5 flex flex-col justify-between relative shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] hover:border-primary/20
+                        ${!store.enabled ? 'opacity-65 grayscale-[35%]' : ''}
                       `}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center
-                        ${store.enabled ? 'translate-x-5' : 'translate-x-0'}
-                      `}>
-                        {store.enabled && <Check className="w-2.5 h-2.5 text-primary" />}
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Brand & Key Info */}
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold tracking-tight mb-1 flex items-center gap-2">
-                      {store.name}
-                      <span className="text-[10px] text-muted-foreground/60 font-mono font-medium px-1.5 py-0.5 rounded bg-muted">
-                        {store.key}
-                      </span>
-                      {(!store.selectors?.product_container || !store.selectors?.product_name || !store.selectors?.product_price) && (
-                        <span 
-                          className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 animate-pulse cursor-help"
-                          title="Low-Code CSS selectors missing. Falling back to generic crawler parsing."
-                        >
-                          <AlertCircle className="w-3.5 h-3.5" />
+                      {/* Category Pill Tag */}
+                      <div className="flex items-center justify-between mb-4">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border capitalize tracking-wider flex items-center gap-1.5 ${catDesign.bg}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${catDesign.dot}`} />
+                          {catDesign.label}
                         </span>
-                      )}
-                    </h3>
-                    <div className="text-muted-foreground text-xs flex items-center gap-1.5 mt-2">
-                      <Globe className="w-3.5 h-3.5 text-muted-foreground/60" />
-                      <span className="font-mono">{store.domain}</span>
-                      <a 
-                        href={`https://${store.domain}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="text-muted-foreground/40 hover:text-foreground transition-colors ml-0.5"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
+                        
+                        {/* Active/Passive Switcher Toggle */}
+                        <button
+                          onClick={() => handleToggleStore(store.key)}
+                          className={`w-11 h-6 rounded-full transition-colors duration-300 relative flex items-center px-1 cursor-pointer
+                            ${store.enabled ? 'gradient-primary glow-primary' : 'bg-muted border border-border'}
+                          `}
+                        >
+                          <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center
+                            ${store.enabled ? 'translate-x-5' : 'translate-x-0'}
+                          `}>
+                            {store.enabled && <Check className="w-2.5 h-2.5 text-primary" />}
+                          </div>
+                        </button>
+                      </div>
 
-                  {/* Scrape URL Pattern Template */}
-                  <div className="glass rounded-xl p-3 bg-muted/20 border border-border/30 mb-5">
-                    <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
-                      Search URL Template
-                    </span>
-                    <span className="text-xs font-mono break-all line-clamp-1 block text-muted-foreground/90">
-                      {store.search_url_template}
-                    </span>
-                  </div>
+                      {/* Brand & Key Info */}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold tracking-tight mb-1 flex items-center gap-2">
+                          {store.name}
+                          <span className="text-[10px] text-muted-foreground/60 font-mono font-medium px-1.5 py-0.5 rounded bg-muted">
+                            {store.key}
+                          </span>
+                          {(!store.selectors?.product_container || !store.selectors?.product_name || !store.selectors?.product_price) && (
+                            <span 
+                              className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 animate-pulse cursor-help"
+                              title="Low-Code CSS selectors missing. Falling back to generic crawler parsing."
+                            >
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                        </h3>
+                        <div className="text-muted-foreground text-xs flex items-center gap-1.5 mt-2">
+                          <Globe className="w-3.5 h-3.5 text-muted-foreground/60" />
+                          <span className="font-mono">{store.domain}</span>
+                          <a 
+                            href={`https://${store.domain}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-muted-foreground/40 hover:text-foreground transition-colors ml-0.5"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
 
-                  {/* Dynamic Custom Selectors indicators */}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground/60 border-t border-border/40 pt-4 mt-auto">
-                    <div className="flex gap-2">
-                      <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
-                        ${store.selectors?.product_container ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
-                      `}>
-                        .container
-                      </span>
-                      <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
-                        ${store.selectors?.product_name ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
-                      `}>
-                        .name
-                      </span>
-                      <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
-                        ${store.selectors?.product_price ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
-                      `}>
-                        .price
-                      </span>
-                    </div>
+                      {/* Scrape URL Pattern Template */}
+                      <div className="glass rounded-xl p-3 bg-muted/20 border border-border/30 mb-5">
+                        <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                          Search URL Template
+                        </span>
+                        <span className="text-xs font-mono break-all line-clamp-1 block text-muted-foreground/90">
+                          {store.search_url_template}
+                        </span>
+                      </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2.5">
-                      <button 
-                        onClick={() => handleOpenEditModal(store)}
-                        className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                        title="Edit Store"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteStore(store.key)}
-                        className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                        title="Delete Store"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Dynamic Custom Selectors indicators */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground/60 border-t border-border/40 pt-4 mt-auto">
+                        <div className="flex gap-2">
+                          <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
+                            ${store.selectors?.product_container ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
+                          `}>
+                            .container
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
+                            ${store.selectors?.product_name ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
+                          `}>
+                            .name
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
+                            ${store.selectors?.product_price ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
+                          `}>
+                            .price
+                          </span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2.5">
+                          <button 
+                            onClick={() => handleOpenEditModal(store)}
+                            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            title="Edit Store"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteStore(store.key)}
+                            className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            title="Delete Store"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'manual' && (
+          <>
+            {/* Filters and Search Bar Container */}
+            <div className="glass-strong rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-lg">
+              {/* Category Pills */}
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                {['all', 'electronics', 'appliances', 'clothing', 'sports', 'cosmetics'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setManualCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-300 capitalize
+                      ${manualCategory === cat 
+                        ? 'gradient-primary text-white border-transparent shadow-md' 
+                        : 'glass text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 border-border/50'
+                      }
+                    `}
+                  >
+                    {cat === 'all' ? 'Tüm Kategoriler' : cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search bar & City filter inside admin */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <div className="relative w-full sm:w-48">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder="Ürün adı ara..."
+                    value={manualSearchQuery}
+                    onChange={(e) => setManualSearchQuery(e.target.value)}
+                    className="pl-9 h-9 text-xs glass border-border/50 focus-visible:ring-primary bg-transparent placeholder:text-muted-foreground/45"
+                  />
                 </div>
-              )
-            })}
-          </div>
+                <div className="relative w-full sm:w-40">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder="Şehir (örn: İzmir)..."
+                    value={manualCity}
+                    onChange={(e) => setManualCity(e.target.value)}
+                    className="pl-9 h-9 text-xs glass border-border/50 focus-visible:ring-primary bg-transparent placeholder:text-muted-foreground/45"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dynamic Loading State */}
+            {manualLoading ? (
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                <Loader2 className="animate-spin text-primary w-10 h-10 mb-4" />
+                <p className="text-muted-foreground text-sm font-medium">Manuel ürünler getiriliyor...</p>
+              </div>
+            ) : manualProducts.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] glass-strong rounded-2xl border-dashed border-border p-12">
+                <FolderOpen className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                <p className="text-muted-foreground text-sm font-medium">Manuel stok kaydı bulunamadı.</p>
+                <p className="text-muted-foreground/50 text-xs mt-1">Elde satış yapan dükkanlar için yeni ürün stokları ekleyin.</p>
+              </div>
+            ) : (
+              /* Products Grid */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {manualProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className={`glass-strong rounded-2xl p-5 flex flex-col justify-between relative shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] hover:border-primary/20
+                      ${!product.in_stock ? 'opacity-65 grayscale-[35%]' : ''}
+                    `}
+                  >
+                    {/* Header: Category Tag & Stock switch */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-bold border capitalize tracking-wider bg-primary/10 border-primary/20 text-primary">
+                        {product.category}
+                      </span>
+                      
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        product.in_stock 
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                      }`}>
+                        {product.in_stock ? 'Stokta' : 'Stokta Yok'}
+                      </span>
+                    </div>
+
+                    {/* Product details */}
+                    <div className="mb-4">
+                      <h3 className="text-base font-bold tracking-tight mb-2">
+                        {product.product_name}
+                      </h3>
+                      
+                      <div className="text-xs space-y-1.5 text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <Store className="w-3.5 h-3.5 text-indigo-400" />
+                          <span className="font-semibold text-foreground">{product.store_name}</span>
+                          {product.branch && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">Şube: {product.branch}</span>}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-teal-400" />
+                          <span>{[product.district, product.city].filter(Boolean).join(', ')}</span>
+                        </div>
+                        {product.address && (
+                          <div className="text-[10px] italic leading-tight pl-5">
+                            {product.address}
+                          </div>
+                        )}
+                        {product.latitude !== null && product.longitude !== null && (
+                          <div className="text-[9px] font-mono pl-5 text-muted-foreground/60">
+                            🌐 {product.latitude.toFixed(4)}, {product.longitude.toFixed(4)}
+                          </div>
+                        )}
+                        {product.notes && (
+                          <div className="text-[10px] bg-muted/40 p-2 rounded-lg border border-border/30 mt-2 text-foreground/80">
+                            📝 {product.notes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Price and Action Buttons */}
+                    <div className="flex items-center justify-between border-t border-border/40 pt-4 mt-auto">
+                      <span className="text-base font-bold font-mono text-primary">
+                        {product.price !== null && product.price !== undefined 
+                          ? `${product.price.toLocaleString('tr-TR')} ${product.currency}`
+                          : 'Fiyat Belirtilmemiş'}
+                      </span>
+
+                      <div className="flex gap-2.5">
+                        <button 
+                          onClick={() => handleEditManualProduct(product)}
+                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          title="Düzenle"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteManualProduct(product.id)}
+                          className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          title="Sil"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {manualTotal > manualPerPage && (
+              <div className="flex items-center justify-center gap-4 mt-8 pt-4 border-t border-border/20">
+                <Button
+                  disabled={manualPage === 1}
+                  onClick={() => setManualPage(prev => Math.max(1, prev - 1))}
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                >
+                  Geri
+                </Button>
+                <span className="text-xs font-medium">
+                  Sayfa {manualPage} / {Math.ceil(manualTotal / manualPerPage)} (Toplam {manualTotal} Ürün)
+                </span>
+                <Button
+                  disabled={manualPage >= Math.ceil(manualTotal / manualPerPage)}
+                  onClick={() => setManualPage(prev => prev + 1)}
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                >
+                  İleri
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -1149,6 +1551,263 @@ export function AdminDashboard() {
                       <Loader2 className="animate-spin w-4 h-4" />
                     ) : (
                       'Save Configuration'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manuel Ürün Ekleme/Düzenleme Modalı */}
+      {isManualModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsManualModalOpen(false)} />
+          
+          {/* Form Content */}
+          <div className="relative w-full max-w-xl glass-strong rounded-2xl shadow-2xl p-6 border border-border z-10 my-8">
+            <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                {isManualEditMode ? `Ürünü Düzenle: ${mpProductName}` : 'Yeni Manuel Ürün Ekle'}
+              </h2>
+              <button 
+                onClick={() => setIsManualModalOpen(false)}
+                className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {manualFormError && (
+              <div className="mb-4 bg-destructive/10 border border-destructive/20 rounded-xl p-3 text-destructive text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{manualFormError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleManualFormSubmit} className="space-y-4">
+              {/* Ürün Adı */}
+              <div>
+                <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                  Ürün Adı *
+                </label>
+                <Input
+                  placeholder="örn: iPhone 15 Pro Max 256GB Siyah"
+                  value={mpProductName}
+                  onChange={(e) => setMpProductName(e.target.value)}
+                  className="h-9 glass border-border/50 text-xs focus-visible:ring-primary focus-visible:ring-1"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Fiyat */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Fiyat (TRY)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="74999.00"
+                    value={mpPrice}
+                    onChange={(e) => setMpPrice(e.target.value)}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary focus-visible:ring-1"
+                  />
+                </div>
+                
+                {/* Kategori */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Kategori *
+                  </label>
+                  <select
+                    value={mpCategory}
+                    onChange={(e) => setMpCategory(e.target.value as any)}
+                    className="w-full h-9 rounded-lg border border-border/50 bg-card text-foreground px-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="electronics">Electronics</option>
+                    <option value="appliances">Appliances</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="sports">Sports</option>
+                    <option value="cosmetics">Cosmetics</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Mağaza Adı */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Mağaza / Esnaf Adı *
+                  </label>
+                  <Input
+                    placeholder="örn: Akman İletişim"
+                    value={mpStoreName}
+                    onChange={(e) => setMpStoreName(e.target.value)}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary"
+                    required
+                  />
+                </div>
+                
+                {/* Şube */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Şube / Lokasyon Etiketi
+                  </label>
+                  <Input
+                    placeholder="örn: Bornova Şubesi"
+                    value={mpBranch}
+                    onChange={(e) => setMpBranch(e.target.value)}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                {/* Şehir */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Şehir *
+                  </label>
+                  <Input
+                    placeholder="İzmir"
+                    value={mpCity}
+                    onChange={(e) => setMpCity(e.target.value)}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary"
+                    required
+                  />
+                </div>
+
+                {/* İlçe */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    İlçe
+                  </label>
+                  <Input
+                    placeholder="Bornova"
+                    value={mpDistrict}
+                    onChange={(e) => setMpDistrict(e.target.value)}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary"
+                  />
+                </div>
+
+                {/* Adres */}
+                <div className="col-span-1">
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Açık Adres
+                  </label>
+                  <Input
+                    placeholder="Bornova Cd. No:4"
+                    value={mpAddress}
+                    onChange={(e) => setMpAddress(e.target.value)}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Enlem */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Enlem (Latitude)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    placeholder="38.4628"
+                    value={mpLatitude}
+                    onChange={(e) => setMpLatitude(e.target.value !== '' ? Number(e.target.value) : '')}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary"
+                  />
+                </div>
+
+                {/* Boylam */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                    Boylam (Longitude)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    placeholder="27.2199"
+                    value={mpLongitude}
+                    onChange={(e) => setMpLongitude(e.target.value !== '' ? Number(e.target.value) : '')}
+                    className="h-9 glass border-border/50 text-xs focus-visible:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Map Picker Component */}
+              <div>
+                <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                  Haritadan Konum Seç (Dükkanın üzerine tıklayın)
+                </label>
+                <div className="w-full h-[220px] rounded-xl overflow-hidden border border-border/50 relative">
+                  <PigeonMap
+                    height={220}
+                    center={mapCenter}
+                    zoom={12}
+                    onClick={handleMapClick}
+                  >
+                    {mpLatitude !== '' && mpLongitude !== '' && (
+                      <PigeonMarker anchor={[Number(mpLatitude), Number(mpLongitude)]} />
+                    )}
+                  </PigeonMap>
+                  <div className="absolute bottom-2 left-2 right-2 bg-black/85 backdrop-blur-sm text-[9px] text-muted-foreground px-2.5 py-1 rounded-md text-center">
+                    Tıklandığında koordinatlar enlem ve boylam alanlarına otomatik doldurulur.
+                  </div>
+                </div>
+              </div>
+
+              {/* Açıklama / Notlar */}
+              <div>
+                <label className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                  Ek Notlar / Açıklama
+                </label>
+                <textarea
+                  placeholder="örn: Salı günleri kapalı, sadece nakit geçerli vb."
+                  value={mpNotes}
+                  onChange={(e) => setMpNotes(e.target.value)}
+                  className="w-full min-h-[60px] rounded-lg border border-border/50 bg-card text-foreground p-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+                />
+              </div>
+
+              <div className="flex items-center justify-between border-t border-border/40 pt-4 mt-6">
+                {/* Stokta mı checkbox toggle */}
+                <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
+                  <input
+                    type="checkbox"
+                    checked={mpInStock}
+                    onChange={(e) => setMpInStock(e.target.checked)}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary bg-card"
+                  />
+                  <span>Stokta Var</span>
+                </label>
+
+                {/* Form Actions */}
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setIsManualModalOpen(false)}
+                    className="text-xs h-9 px-4 rounded-lg"
+                  >
+                    Vazgeç
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={manualSubmitting}
+                    className="gradient-primary text-white shadow-lg text-xs h-9 px-5 rounded-lg hover:scale-[1.01] active:scale-[0.99] transition-all"
+                  >
+                    {manualSubmitting ? (
+                      <Loader2 className="animate-spin w-4 h-4" />
+                    ) : (
+                      'Kaydet'
                     )}
                   </Button>
                 </div>
