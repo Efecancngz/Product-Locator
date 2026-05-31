@@ -60,7 +60,7 @@ services:
   # Source: https://github.com/Efecancngz/ReportSystem
   # For production, replace 'build' with 'image: ghcr.io/efecancngz/report-system:latest'
   report-system:
-    build: https://github.com/Efecancngz/ReportSystem.git
+    image: novaity/report-system:latest
     container_name: product-locator-report-system
     ports:
       - "8080:8080"
