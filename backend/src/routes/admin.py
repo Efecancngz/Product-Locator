@@ -463,3 +463,155 @@ async def test_report_trigger():
         email_config=email_config
     )
     return {"message": "Test notification triggered.", "result": result}
+
+
+# --- Manual Product CRUD API Endpoints ---
+
+from src.models.manual_product import (
+    ManualProductCreate,
+    ManualProductUpdate,
+    ManualProductResponse,
+    ManualProductListResponse
+)
+from fastapi import Query
+from typing import Optional
+
+@router.get(
+    "/admin/manual-products",
+    response_model=ManualProductListResponse,
+    summary="List Manual Products",
+    description="Lists all manually entered products with search and filtering.",
+)
+async def list_manual_products(
+    category: Optional[str] = Query(None, description="Filter by category"),
+    city: Optional[str] = Query(None, description="Filter by city"),
+    query: Optional[str] = Query(None, description="Search by product name"),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Items per page")
+):
+    products, total = await db_service.get_manual_products(
+        category=category,
+        city=city,
+        query=query,
+        page=page,
+        per_page=per_page
+    )
+    return {
+        "products": products,
+        "total": total,
+        "page": page,
+        "per_page": per_page
+    }
+
+@router.get(
+    "/admin/manual-products/{id}",
+    response_model=ManualProductResponse,
+    summary="Get Manual Product details",
+    description="Retrieves a single manually entered product by its database ID.",
+)
+async def get_manual_product(
+    id: str = Path(..., description="The unique ID of the manual product")
+):
+    product = await db_service.get_manual_product_by_id(id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Manual product not found: {id}"
+        )
+    return product
+
+@router.post(
+    "/admin/manual-products",
+    response_model=ManualProductResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Manual Product",
+    description="Adds a new manual product stock entry.",
+)
+async def create_manual_product(
+    payload: ManualProductCreate
+):
+    product_data = payload.model_dump()
+    product_id = await db_service.add_manual_product(product_data)
+    if not product_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to save manual product."
+        )
+    
+    # Retrieve and return the created product
+    created = await db_service.get_manual_product_by_id(product_id)
+    if not created:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Product created but could not be retrieved."
+        )
+    return created
+
+@router.put(
+    "/admin/manual-products/{id}",
+    response_model=ManualProductResponse,
+    summary="Update Manual Product",
+    description="Updates an existing manual product stock entry.",
+)
+async def update_manual_product(
+    id: str = Path(..., description="The unique ID of the manual product"),
+    payload: ManualProductUpdate = None
+):
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Update payload cannot be empty."
+        )
+    update_data = {k: v for k, v in payload.model_dump().items() if v is not None}
+    success = await db_service.update_manual_product(id, update_data)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Manual product not found or no fields changed: {id}"
+        )
+    
+    updated = await db_service.get_manual_product_by_id(id)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Product updated but could not be retrieved."
+        )
+    return updated
+
+@router.delete(
+    "/admin/manual-products/{id}",
+    summary="Delete Manual Product",
+    description="Deletes a manually entered product by ID.",
+)
+async def delete_manual_product(
+    id: str = Path(..., description="The unique ID of the manual product")
+):
+    success = await db_service.delete_manual_product(id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Manual product not found: {id}"
+        )
+    return {"message": f"Manual product successfully deleted: {id}", "id": id}
+
+@router.post(
+    "/admin/manual-products/bulk",
+    summary="Bulk Add Manual Products",
+    description="Imports a list of manual products.",
+)
+async def bulk_create_manual_products(
+    payload: List[ManualProductCreate]
+):
+    inserted_ids = []
+    for item in payload:
+        product_data = item.model_dump()
+        product_id = await db_service.add_manual_product(product_data)
+        if product_id:
+            inserted_ids.append(product_id)
+    
+    return {
+        "message": f"Successfully imported {len(inserted_ids)} out of {len(payload)} products.",
+        "imported_count": len(inserted_ids),
+        "total_count": len(payload)
+    }
+

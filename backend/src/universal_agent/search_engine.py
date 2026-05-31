@@ -431,8 +431,13 @@ class GenericSiteSearcher(SearchEngine):
                     if page: await page.close()
                 return domain_results
 
-            # Execute all domains in parallel
-            tasks = [search_domain(d) for d in domains_to_search]
+            # Execute all domains in parallel, throttled with semaphore to avoid container memory exhaustion (OOM)
+            sem = asyncio.Semaphore(2)
+            async def search_domain_with_sem(domain):
+                async with sem:
+                    return await search_domain(domain)
+
+            tasks = [search_domain_with_sem(d) for d in domains_to_search]
             all_domain_results = await asyncio.gather(*tasks)
             
             for res_list in all_domain_results:

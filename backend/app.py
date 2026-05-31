@@ -4,6 +4,7 @@ from src.config.settings import settings
 from src.routes import search, admin
 import sys
 import asyncio
+import logging
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -18,6 +19,12 @@ tags_metadata = [
     {
         "name": "health",
         "description": "Server health status check.",
+    },
+    {
+        "name": "admin",
+        "description": "SaaS Admin Dashboard operations. Includes dynamic e-commerce retail store CRUD management, "
+                       "live scraper simulators, system diagnostic telemetry pings, notification settings (Telegram, SMTP Email), "
+                       "and manual physical branch product stock registry management with Pigeon-Map coordinate selections.",
     },
 ]
 
@@ -50,8 +57,6 @@ app = FastAPI(
 )
 
 # Logging Setup
-import logging
-import sys
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -71,6 +76,9 @@ from src.config.limiter import limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
+# Documentation paths that must NOT receive restrictive CSP headers
+_DOCS_PATHS = frozenset(["/docs", "/docs/", "/redoc", "/redoc/", "/openapi.json"])
+
 # 1. Custom Security Headers Middleware (IEEE 829 QA Standard TC-SEC-001)
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -81,14 +89,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if settings.ENV == "production":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         
-        # CSP (Content Security Policy)
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data: https:;"
-        )
+        # CSP: Skip entirely for Swagger/ReDoc documentation paths.
+        # Swagger UI loads JS/CSS from cdn.jsdelivr.net which any CSP blocks.
+        # For all other paths, apply a strict Content Security Policy.
+        path = request.url.path
+        if path not in _DOCS_PATHS:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline'; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data: https:;"
+            )
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
@@ -148,4 +160,5 @@ if __name__ == "__main__":
         
     print("--> Starting Server with Proactor Loop (No Reload) <--")
     # Port 8001 since 8000 is stuck
-    uvicorn.run("app:app", host="0.0.0.0", port=8001, reload=False) 
+    uvicorn.run("app:app", host="0.0.0.0", port=8001, reload=False)
+

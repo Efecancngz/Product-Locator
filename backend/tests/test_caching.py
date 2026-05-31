@@ -16,7 +16,7 @@ async def test_search_service_caching_flow(monkeypatch, mock_products):
     # Track how many times search service calls the orchestrator / actual search method
     orchestrator_call_count = 0
     
-    async def mock_orchestrator_search(self, query: str, city=None, district=None):
+    async def mock_orchestrator_search(self, query: str, city=None, district=None, category=None):
         nonlocal orchestrator_call_count
         orchestrator_call_count += 1
         return [
