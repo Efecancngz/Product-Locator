@@ -144,3 +144,14 @@ To make your CV portfolio look absolutely bulletproof for tech leads:
    ```
 2. **Setup Domain**: Bind a free domain (e.g., using No-IP or duckdns) to your VM public IP to replace raw IP calls in your frontend client.
 3. **Restrict MongoDB Access**: Update MongoDB Atlas IP Access list to only allow your virtual machine's public IP, preventing public access to your database port.
+
+---
+
+## 5. Manual Stock Entry & Notification Service Deployments
+
+### MongoDB / In-Memory (Dual-Mode Design)
+The Manual Stock Entry system operates in the `manual_products` collection under MongoDB/Atlas. To keep hosting 100% free, the database acts in **Dual-Mode**, seamlessly falling back to a secure thread-safe In-Memory Cache if MongoDB is unconfigured or offline. Selecting branch coordinates via the interactive **Map Picker** (Pigeon-Maps) runs client-side and requires zero paid Google Maps API keys.
+
+### ReportSystem Deployment Status
+* The Java-based `report-system` microservice is **fully integrated and active by default inside `docker-compose.yml`**, pulling directly from the public Docker Hub registry image `novaity/report-system:latest`.
+* This eliminates any need to clone the Java source code repository locally. Simply executing a single command (`docker-compose up`) pulls the image and boots up all notification channels (Telegram, Email, and SMS alerts) automatically.

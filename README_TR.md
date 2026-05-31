@@ -71,6 +71,7 @@ Standart fiyat karşılaştırma motorlarının (Akakçe, Cimri vb.) aksine **Pr
 | **Bildirim Merkezi** | ReportSystem mikroservis entegrasyonu ile Telegram, E-posta ve SMS üzerinden kazıcı hata ve stok alarmları |
 | **AI Destekli Parse** | Gemini Flash 2.0 ile HTML'den otomatik ürün çıkarımı |
 | **Fallback Parser** | AI başarısız olursa BeautifulSoup tabanlı gelişmiş yedek sistem |
+| **Manuel Stok Girişi** | Web sitesi bulunmayan yerel esnaflar için haritadan koordinat seçmeli (**Map Picker - Pigeon-Maps**) manuel ürün stok yönetimi |
 
 ---
 
@@ -303,6 +304,15 @@ Product-Locator/
 | `OPENAI_API_KEY` | — | `""` | Şu an kullanılmıyor |
 | `MONGO_URL` | — | `mongodb://localhost:27017` | MongoDB bağlantısı |
 | `DB_NAME` | — | `product_locator` | Veritabanı adı |
+
+## Manuel Stok Girişi & Haritadan Konum Seçici (Map Picker)
+
+Product Locator, web sitesi veya e-ticaret altyapısı bulunmayan yerel fiziksel mağazaların (esnafların) da sisteme dahil edilebilmesi için manuel stok giriş sistemini tam destekler.
+
+### Manuel Stok Yönetimi Öne Çıkan Özellikler:
+- **İnteraktif Konum Seçici (Map Picker):** Admin Panelinden manuel ürün eklenirken veya güncellenirken, yönetici Pigeon-Maps haritası üzerinde istediği noktaya tıklayarak şubenin enlem (`latitude`) ve boylam (`longitude`) koordinatlarını otomatik olarak forma doldurabilir.
+- **Arama Pipeline Entegrasyonu:** Manuel olarak eklenen ürünler, arama motoruna (search orchestrator) entegre edilmiştir. Arama yapıldığında, web sitelerinden anlık olarak çekilen (scrape edilen) ürünler ileşleşen aktif manuel stoklar birleştirilir; fiyata, kategoriye ve mesafeye göre sıralanır.
+- **Çift Modlu Çalışma Güvencesi (Dual-Mode Sync):** Veriler MongoDB üzerinde kalıcı saklanır; MongoDB çevrimdışı olduğunda ise thread-safe in-memory cache fallback mekanizması sayesinde veri kaybı yaşanmadan kesintisiz hizmet sunulur.
 
 ---
 

@@ -140,3 +140,14 @@ Canlıya aldığınız projenin CV değerini artıracak profesyonel adımlar:
    ```
 2. **Ücretsiz Alan Adı**: duckdns veya No-IP gibi servislerden ücretsiz bir alt alan adı alarak API isteklerindeki ham IP adresini bir domain ile değiştirebilirsiniz.
 3. **MongoDB IP Sınırlaması**: MongoDB Atlas panelindeki IP erişim listesinden `0.0.0.0/0` yerine yalnızca sanal sunucunuzun (VM) IP adresini ekleyerek, veritabanına dışarıdan gelebilecek tüm siber saldırı kapılarını kilitleyebilirsiniz.
+
+---
+
+## 5. Manuel Stok Girişi & Raporlama Mikroservis Tercihleri
+
+### MongoDB / In-Memory (Çift Modlu Çalışma)
+Manuel Stok Girişi sistemi MongoDB Atlas veya yerel MongoDB üzerinde `manual_products` koleksiyonunda saklanır. Ancak canlı sunucu maliyetlerinizi sıfırlamak isterseniz, veritabanı kurmadan bile uygulama **Dual-Mode** sayesinde bellekte (In-Memory) çalışmaya devam eder. Ürün girişi yaparken koordinatlar için entegre Pigeon-Maps **Map Picker** (Harita Seçici) harici bir API key gerektirmediğinden anında çalışır.
+
+### ReportSystem Servis Durumu
+* Java tabanlı `report-system` mikroservisi, **`docker-compose.yml` dosyası içerisinde doğrudan Docker Hub üzerindeki resmi `novaity/report-system:latest` imajından çekilecek şekilde tanımlanmıştır**.
+* Bu sayede lokal bilgisayara hiçbir Java/ReportSystem kaynak kodu klonlanmasına gerek kalmadan, tek bir komutla (`docker compose up`) Telegram, E-posta ve SMS bildirim servisleri otomatik olarak ayağa kalkar!

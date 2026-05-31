@@ -78,6 +78,7 @@ Unlike standard price comparison engines (such as Akakçe or Cimri) which primar
 | **AI-Powered Parsing** | Automated HTML extraction via Google Gemini Flash 2.0 |
 | **Resilient Scrapers** | Fallback parser using BeautifulSoup4 with upgraded malformed JSON-LD bypass |
 | **SaaS Dynamic Stores** | Live retailer CRUD, active toggle switches, and no-code CSS selectors |
+| **Manual Stock Entry** | Create and manage physical-only store stock entries with coordinate selections via an interactive **Map Picker** (Pigeon-Maps) |
 
 ---
 
@@ -238,6 +239,15 @@ curl "http://localhost:8001/api/v1/search?q=iPhone+15+Pro&city=İzmir"
   ]
 }
 ```
+
+## Manual Stock Entry & Map Picker
+
+Product Locator supports physical-only store stock entries (such as local shopkeepers/esnafs) that do not maintain an online e-commerce website. 
+
+### Key Features of Manual Registry:
+- **Interactive Map Picker:** When adding or editing manual stock inside the Admin Panel, the administrator can click anywhere on an interactive OpenStreetMap (powered by Pigeon-Maps) to automatically capture and fill the precise `latitude` and `longitude` coordinates of the branch.
+- **Search Pipeline Integration:** Manually entered products are fully integrated into the search orchestrator. Searching for a product merges online scraped results with matching active manual entries, sorting them by price, category, and spatial distance.
+- **Dual-Mode Sync Support:** Works seamlessly with MongoDB persistence, falling back to a thread-safe in-memory cache if MongoDB is offline.
 
 ---
 
