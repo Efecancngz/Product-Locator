@@ -54,7 +54,7 @@ def mock_products():
 @pytest.fixture
 def patch_search_service(monkeypatch, mock_products):
     """Monkeys patches SearchService.search_products to avoid actual web scraping and AI calls."""
-    async def mock_search_products(self, query: str, city=None, district=None):
+    async def mock_search_products(self, query: str, city=None, district=None, category=None):
         if len(query) < 2 or len(query) > 100:
             raise ValueError("Invalid query size")
         

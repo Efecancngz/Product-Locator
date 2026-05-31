@@ -329,5 +329,228 @@ class DatabaseService:
                 return False
         return True
 
+    # ==========================================
+    # MANUAL PRODUCT STOCK OPERATIONS
+    # ==========================================
+
+    async def add_manual_product(self, product_data: Dict[str, Any]) -> Optional[str]:
+        """Add a manually entered product. Returns product ID."""
+        now = datetime.now(timezone.utc)
+        product_data["created_at"] = now
+        product_data["updated_at"] = now
+        product_data.setdefault("created_by", "admin")
+
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                result = await self.db.manual_products.insert_one(product_data)
+                product_id = str(result.inserted_id)
+                logger.info(f"[DBService] Manual product added to MongoDB: {product_id}")
+                return product_id
+            except Exception as e:
+                logger.error(f"[DBService] Failed to add manual product to MongoDB: {e}")
+                return None
+
+        # B. In-Memory Fallback
+        import uuid
+        product_id = str(uuid.uuid4())[:8]
+        product_data["_id"] = product_id
+        if not hasattr(self, '_manual_products_cache'):
+            self._manual_products_cache: List[Dict[str, Any]] = []
+        self._manual_products_cache.append(product_data)
+        logger.info(f"[DBService] Manual product added to In-Memory: {product_id}")
+        return product_id
+
+    async def get_manual_products(
+        self,
+        category: Optional[str] = None,
+        city: Optional[str] = None,
+        query: Optional[str] = None,
+        page: int = 1,
+        per_page: int = 20
+    ) -> tuple:
+        """Get paginated manual products with optional filters. Returns (products, total_count)."""
+        skip = (page - 1) * per_page
+
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                filter_query: Dict[str, Any] = {}
+                if category:
+                    filter_query["category"] = category
+                if city:
+                    filter_query["city"] = {"$regex": city, "$options": "i"}
+                if query:
+                    filter_query["product_name"] = {"$regex": query, "$options": "i"}
+
+                total = await self.db.manual_products.count_documents(filter_query)
+                cursor = self.db.manual_products.find(filter_query).sort("updated_at", -1).skip(skip).limit(per_page)
+                products = await cursor.to_list(length=per_page)
+
+                for p in products:
+                    if "_id" in p:
+                        p["id"] = str(p.pop("_id"))
+
+                return products, total
+            except Exception as e:
+                logger.error(f"[DBService] Failed to get manual products from MongoDB: {e}")
+                return [], 0
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_manual_products_cache'):
+            self._manual_products_cache = []
+
+        filtered = list(self._manual_products_cache)
+        if category:
+            filtered = [p for p in filtered if p.get("category") == category]
+        if city:
+            city_lower = city.lower()
+            filtered = [p for p in filtered if city_lower in p.get("city", "").lower()]
+        if query:
+            query_lower = query.lower()
+            filtered = [p for p in filtered if query_lower in p.get("product_name", "").lower()]
+
+        total = len(filtered)
+        paginated = filtered[skip:skip + per_page]
+
+        for p in paginated:
+            if "_id" in p and "id" not in p:
+                p["id"] = p["_id"]
+
+        return paginated, total
+
+    async def get_manual_product_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
+        """Get a single manual product by ID."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                from bson import ObjectId
+                doc = await self.db.manual_products.find_one({"_id": ObjectId(product_id)})
+                if doc:
+                    doc["id"] = str(doc.pop("_id"))
+                    return doc
+            except Exception as e:
+                logger.error(f"[DBService] Failed to get manual product '{product_id}': {e}")
+            return None
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_manual_products_cache'):
+            return None
+        for p in self._manual_products_cache:
+            if p.get("_id") == product_id:
+                result = dict(p)
+                result["id"] = result.pop("_id", product_id)
+                return result
+        return None
+
+    async def update_manual_product(self, product_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update a manual product by ID."""
+        update_data["updated_at"] = datetime.now(timezone.utc)
+
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                from bson import ObjectId
+                result = await self.db.manual_products.update_one(
+                    {"_id": ObjectId(product_id)},
+                    {"$set": update_data}
+                )
+                if result.modified_count > 0:
+                    logger.info(f"[DBService] Manual product updated: {product_id}")
+                    return True
+                return False
+            except Exception as e:
+                logger.error(f"[DBService] Failed to update manual product '{product_id}': {e}")
+                return False
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_manual_products_cache'):
+            return False
+        for p in self._manual_products_cache:
+            if p.get("_id") == product_id:
+                p.update(update_data)
+                logger.info(f"[DBService] Manual product updated in memory: {product_id}")
+                return True
+        return False
+
+    async def delete_manual_product(self, product_id: str) -> bool:
+        """Delete a manual product by ID."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                from bson import ObjectId
+                result = await self.db.manual_products.delete_one({"_id": ObjectId(product_id)})
+                if result.deleted_count > 0:
+                    logger.info(f"[DBService] Manual product deleted: {product_id}")
+                    return True
+                return False
+            except Exception as e:
+                logger.error(f"[DBService] Failed to delete manual product '{product_id}': {e}")
+                return False
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_manual_products_cache'):
+            return False
+        original_len = len(self._manual_products_cache)
+        self._manual_products_cache = [p for p in self._manual_products_cache if p.get("_id") != product_id]
+        deleted = len(self._manual_products_cache) < original_len
+        if deleted:
+            logger.info(f"[DBService] Manual product deleted from memory: {product_id}")
+        return deleted
+
+    async def search_manual_products(
+        self,
+        query: str,
+        city: Optional[str] = None,
+        category: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Search manual products for integration with the main search pipeline."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                filter_query: Dict[str, Any] = {
+                    "in_stock": True,
+                    "product_name": {"$regex": query, "$options": "i"}
+                }
+                if city:
+                    filter_query["city"] = {"$regex": city, "$options": "i"}
+                if category:
+                    filter_query["category"] = category
+
+                cursor = self.db.manual_products.find(filter_query).limit(10)
+                results = await cursor.to_list(length=10)
+                for p in results:
+                    if "_id" in p:
+                        p["id"] = str(p.pop("_id"))
+                return results
+            except Exception as e:
+                logger.error(f"[DBService] Failed to search manual products: {e}")
+                return []
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_manual_products_cache'):
+            return []
+
+        query_lower = query.lower()
+        results = []
+        for p in self._manual_products_cache:
+            if not p.get("in_stock", True):
+                continue
+            if query_lower not in p.get("product_name", "").lower():
+                continue
+            if city and city.lower() not in p.get("city", "").lower():
+                continue
+            if category and p.get("category") != category:
+                continue
+            result = dict(p)
+            if "_id" in result:
+                result["id"] = result.pop("_id")
+            results.append(result)
+            if len(results) >= 10:
+                break
+
+        return results
+
 # Singleton
 db_service = DatabaseService()
+

@@ -42,10 +42,16 @@ class StoreService:
         """
         # Normalize chain name
         chain_normalized = self._normalize_name(chain)
+        if not chain_normalized:
+            return None
         
-        # Find matching chain
+        # Find matching chain with fuzzy matching
         for store_chain, branches in self.stores.items():
-            if self._normalize_name(store_chain) == chain_normalized:
+            store_chain_norm = self._normalize_name(store_chain)
+            if store_chain_norm == chain_normalized or \
+               chain_normalized in store_chain_norm or \
+               store_chain_norm in chain_normalized:
+                
                 # If branch specified, try to find exact match
                 if branch:
                     branch_normalized = self._normalize_name(branch)
@@ -69,9 +75,15 @@ class StoreService:
     def get_store_info(self, chain: str, branch: Optional[str] = None) -> Optional[Dict]:
         """Get full store info including coordinates."""
         chain_normalized = self._normalize_name(chain)
+        if not chain_normalized:
+            return None
         
         for store_chain, branches in self.stores.items():
-            if self._normalize_name(store_chain) == chain_normalized:
+            store_chain_norm = self._normalize_name(store_chain)
+            if store_chain_norm == chain_normalized or \
+               chain_normalized in store_chain_norm or \
+               store_chain_norm in chain_normalized:
+                
                 if branch:
                     branch_normalized = self._normalize_name(branch)
                     for branch_name, data in branches.items():
