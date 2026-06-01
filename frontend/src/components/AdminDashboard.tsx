@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   ArrowLeft, Store, Plus, Trash2, Edit3, Globe, FolderOpen, 
@@ -9,7 +9,7 @@ import {
 import { apiClient } from '../api/client'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import gsap from 'gsap'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Map as PigeonMap, Marker as PigeonMarker } from 'pigeon-maps'
 
 // Define interfaces for store configuration
@@ -56,6 +56,30 @@ const CATEGORY_STYLES = {
     bg: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
     dot: 'bg-purple-400',
     label: 'Cosmetics'
+  }
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15, scale: 0.98 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 120,
+      damping: 14
+    }
   }
 }
 
@@ -270,10 +294,7 @@ export function AdminDashboard() {
     setMpLongitude(Number(latLng[1].toFixed(6)))
   }
 
-  // Refs for GSAP animation
-  const gridBgRef = useRef<HTMLDivElement>(null)
-  const dashboardHeaderRef = useRef<HTMLDivElement>(null)
-  const cardsGridRef = useRef<HTMLDivElement>(null)
+
 
   // Health Metrics State
   const [health, setHealth] = useState<{
@@ -448,20 +469,6 @@ export function AdminDashboard() {
     }
   }
 
-  // Mount animation using GSAP
-  useEffect(() => {
-    if (!loading && stores.length > 0) {
-      const ctx = gsap.context(() => {
-        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-        
-        tl.fromTo(gridBgRef.current, { opacity: 0 }, { opacity: 0.25, duration: 1.2 })
-          .fromTo(dashboardHeaderRef.current, { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, '-=0.8')
-          .fromTo('.store-card', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.05 }, '-=0.5')
-      })
-      return () => ctx.revert()
-    }
-  }, [loading])
-
   // Toggle store status (active/passive)
   const handleToggleStore = async (key: string) => {
     const originalStores = [...stores]
@@ -469,12 +476,6 @@ export function AdminDashboard() {
     setStores(prev => prev.map(s => s.key === key ? { ...s, enabled: !s.enabled } : s))
     
     try {
-      // Find element & animate with GSAP
-      const cardEl = document.querySelector(`[data-store-key="${key}"]`)
-      if (cardEl) {
-        gsap.fromTo(cardEl, { scale: 0.98 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' })
-      }
-      
       await apiClient.patch(`/admin/stores/${key}/toggle`)
     } catch (err) {
       console.error('Failed to toggle store:', err)
@@ -490,12 +491,6 @@ export function AdminDashboard() {
     }
 
     try {
-      // Animate fade-out first
-      const cardEl = document.querySelector(`[data-store-key="${key}"]`)
-      if (cardEl) {
-        await gsap.to(cardEl, { scale: 0.8, opacity: 0, duration: 0.4, ease: 'power2.in' })
-      }
-      
       await apiClient.delete(`/admin/stores/${key}`)
       setStores(prev => prev.filter(s => s.key !== key))
     } catch (err) {
@@ -615,10 +610,11 @@ export function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden pb-12">
       {/* Dynamic backdrop grid */}
-      <div
-        ref={gridBgRef}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.15 }}
+        transition={{ duration: 1.0 }}
         className="fixed inset-0 grid-bg grid-bg-fade gradient-mesh pointer-events-none z-0"
-        style={{ opacity: 0.15 }}
       />
 
       {/* Admin Dashboard Header */}
@@ -742,7 +738,12 @@ export function AdminDashboard() {
       </header>
 
       {/* Main Panel Content */}
-      <main ref={dashboardHeaderRef} className="container mx-auto px-4 pt-8 relative z-10 flex-1 flex flex-col gap-6">
+      <motion.main
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="container mx-auto px-4 pt-8 relative z-10 flex-1 flex flex-col gap-6"
+      >
 
         {/* Sub-Navigation Tabs */}
         <div className="flex gap-6 border-b border-border/40 pb-px">
@@ -774,8 +775,16 @@ export function AdminDashboard() {
         </div>
 
         {/* ===== Notification Center Panel (Rapor & Bildirim Merkezi) ===== */}
-        {showNotifPanel && (
-          <div className="glass-strong rounded-2xl p-6 shadow-xl border border-indigo-500/20 animate-in slide-in-from-top-2 duration-300" style={{background: 'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.06) 100%)'}}>
+        <AnimatePresence>
+          {showNotifPanel && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0, y: -15 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="glass-strong rounded-2xl p-6 shadow-xl border border-indigo-500/20 overflow-hidden" 
+              style={{background: 'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.06) 100%)'}}
+            >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background: 'linear-gradient(135deg, #6366f1, #a855f7)'}}>
@@ -916,8 +925,9 @@ export function AdminDashboard() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
         {activeTab === 'stores' && (
           <>
@@ -978,126 +988,131 @@ export function AdminDashboard() {
               </div>
             ) : (
               /* Cards Grid */
-              <div ref={cardsGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredStores.map((store) => {
-                  const catDesign = CATEGORY_STYLES[store.category] || {
-                    bg: 'bg-muted border-border text-muted-foreground',
-                    dot: 'bg-muted-foreground',
-                    label: store.category
-                  }
-                  
-                  return (
-                    <div
-                      key={store.key}
-                      data-store-key={store.key}
-                      className={`store-card glass-strong rounded-2xl p-5 flex flex-col justify-between relative shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] hover:border-primary/20
-                        ${!store.enabled ? 'opacity-65 grayscale-[35%]' : ''}
-                      `}
-                    >
-                      {/* Category Pill Tag */}
-                      <div className="flex items-center justify-between mb-4">
-                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border capitalize tracking-wider flex items-center gap-1.5 ${catDesign.bg}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${catDesign.dot}`} />
-                          {catDesign.label}
-                        </span>
-                        
-                        {/* Active/Passive Switcher Toggle */}
-                        <button
-                          onClick={() => handleToggleStore(store.key)}
-                          className={`w-11 h-6 rounded-full transition-colors duration-300 relative flex items-center px-1 cursor-pointer
-                            ${store.enabled ? 'gradient-primary glow-primary' : 'bg-muted border border-border'}
-                          `}
-                        >
-                          <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center
-                            ${store.enabled ? 'translate-x-5' : 'translate-x-0'}
-                          `}>
-                            {store.enabled && <Check className="w-2.5 h-2.5 text-primary" />}
-                          </div>
-                        </button>
-                      </div>
-
-                      {/* Brand & Key Info */}
-                      <div className="mb-4">
-                        <h3 className="text-lg font-bold tracking-tight mb-1 flex items-center gap-2">
-                          {store.name}
-                          <span className="text-[10px] text-muted-foreground/60 font-mono font-medium px-1.5 py-0.5 rounded bg-muted">
-                            {store.key}
+              <motion.div 
+                layout
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                <AnimatePresence mode="popLayout">
+                  {filteredStores.map((store) => {
+                    const catDesign = CATEGORY_STYLES[store.category] || {
+                      bg: 'bg-muted border-border text-muted-foreground',
+                      dot: 'bg-muted-foreground',
+                      label: store.category
+                    }
+                    
+                    return (
+                      <motion.div
+                        layout
+                        key={store.key}
+                        variants={itemVariants}
+                        exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        data-store-key={store.key}
+                        className={`store-card glass-strong rounded-2xl p-5 flex flex-col justify-between relative shadow-md hover:shadow-xl transition-all duration-300 hover:border-primary/20
+                          ${!store.enabled ? 'opacity-65 grayscale-[35%]' : ''}
+                        `}
+                      >
+                        {/* Category Pill Tag */}
+                        <div className="flex items-center justify-between mb-4">
+                          <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border capitalize tracking-wider flex items-center gap-1.5 ${catDesign.bg}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${catDesign.dot}`} />
+                            {catDesign.label}
                           </span>
-                          {(!store.selectors?.product_container || !store.selectors?.product_name || !store.selectors?.product_price) && (
-                            <span 
-                              className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 animate-pulse cursor-help"
-                              title="Low-Code CSS selectors missing. Falling back to generic crawler parsing."
-                            >
-                              <AlertCircle className="w-3.5 h-3.5" />
+                          
+                          {/* Active/Passive Switcher Toggle */}
+                          <button
+                            onClick={() => handleToggleStore(store.key)}
+                            className={`w-11 h-6 rounded-full transition-colors duration-300 relative flex items-center px-1 cursor-pointer
+                              ${store.enabled ? 'gradient-primary glow-primary' : 'bg-muted border border-border'}
+                            `}
+                          >
+                            <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center
+                              ${store.enabled ? 'translate-x-5' : 'translate-x-0'}
+                            `}>
+                              {store.enabled && <Check className="w-2.5 h-2.5 text-primary" />}
+                            </div>
+                          </button>
+                        </div>
+
+                        {/* Brand & Key Info */}
+                        <div className="mb-4">
+                          <h3 className="text-lg font-bold tracking-tight mb-1 flex items-center gap-2">
+                            {store.name}
+                            <span className="text-[10px] text-muted-foreground/60 font-mono font-medium px-1.5 py-0.5 rounded bg-muted">
+                              {store.key}
                             </span>
-                          )}
-                        </h3>
-                        <div className="text-muted-foreground text-xs flex items-center gap-1.5 mt-2">
-                          <Globe className="w-3.5 h-3.5 text-muted-foreground/60" />
-                          <span className="font-mono">{store.domain}</span>
-                          <a 
-                            href={`https://${store.domain}`} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="text-muted-foreground/40 hover:text-foreground transition-colors ml-0.5"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                          </h3>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                            <Globe className="w-3.5 h-3.5 text-muted-foreground/75" />
+                            <span className="truncate">{store.domain}</span>
+                            <a 
+                              href={`https://${store.domain}`} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-muted-foreground/40 hover:text-foreground transition-colors ml-0.5"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Scrape URL Pattern Template */}
-                      <div className="glass rounded-xl p-3 bg-muted/20 border border-border/30 mb-5">
-                        <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
-                          Search URL Template
-                        </span>
-                        <span className="text-xs font-mono break-all line-clamp-1 block text-muted-foreground/90">
-                          {store.search_url_template}
-                        </span>
-                      </div>
-
-                      {/* Dynamic Custom Selectors indicators */}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground/60 border-t border-border/40 pt-4 mt-auto">
-                        <div className="flex gap-2">
-                          <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
-                            ${store.selectors?.product_container ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
-                          `}>
-                            .container
+                        {/* Scrape URL Pattern Template */}
+                        <div className="glass rounded-xl p-3 bg-muted/20 border border-border/30 mb-5">
+                          <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wider block mb-1">
+                            Search URL Template
                           </span>
-                          <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
-                            ${store.selectors?.product_name ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
-                          `}>
-                            .name
-                          </span>
-                          <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
-                            ${store.selectors?.product_price ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
-                          `}>
-                            .price
+                          <span className="text-xs font-mono break-all line-clamp-1 block text-muted-foreground/90">
+                            {store.search_url_template}
                           </span>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2.5">
-                          <button 
-                            onClick={() => handleOpenEditModal(store)}
-                            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                            title="Edit Store"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteStore(store.key)}
-                            className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                            title="Delete Store"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        {/* Dynamic Custom Selectors indicators */}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground/60 border-t border-border/40 pt-4 mt-auto">
+                          <div className="flex gap-2">
+                            <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
+                              ${store.selectors?.product_container ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
+                            `}>
+                              .container
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
+                              ${store.selectors?.product_name ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
+                            `}>
+                              .name
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded font-mono text-[9px]
+                              ${store.selectors?.product_price ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-muted text-muted-foreground/40'}
+                            `}>
+                              .price
+                            </span>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2.5">
+                            <button 
+                              onClick={() => handleOpenEditModal(store)}
+                              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title="Edit Store"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteStore(store.key)}
+                              className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              title="Delete Store"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                      </motion.div>
+                    )
+                  })}
+                </AnimatePresence>
+              </motion.div>
             )}
           </>
         )}
@@ -1276,16 +1291,30 @@ export function AdminDashboard() {
             )}
           </>
         )}
-      </main>
+      </motion.main>
 
       {/* CRUD Overlay Form Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsModalOpen(false)} />
-          
-          {/* Form Content */}
-          <div className="relative w-full max-w-xl glass-strong rounded-2xl shadow-2xl p-6 border border-border overflow-hidden z-10 animate-pulse-glow">
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md pointer-events-auto" 
+              onClick={() => setIsModalOpen(false)} 
+            />
+            
+            {/* Form Content */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+              className="relative w-full max-w-xl glass-strong rounded-2xl shadow-2xl p-6 border border-border overflow-hidden z-10 animate-pulse-glow pointer-events-auto"
+            >
             <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
@@ -1556,18 +1585,33 @@ export function AdminDashboard() {
                 </div>
               </div>
             </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Manuel Ürün Ekleme/Düzenleme Modalı */}
-      {isManualModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsManualModalOpen(false)} />
-          
-          {/* Form Content */}
-          <div className="relative w-full max-w-xl glass-strong rounded-2xl shadow-2xl p-6 border border-border z-10 my-8">
+      <AnimatePresence>
+        {isManualModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md pointer-events-auto" 
+              onClick={() => setIsManualModalOpen(false)} 
+            />
+            
+            {/* Form Content */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+              className="relative w-full max-w-xl glass-strong rounded-2xl shadow-2xl p-6 border border-border z-10 my-8 pointer-events-auto"
+            >
             <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
@@ -1813,9 +1857,10 @@ export function AdminDashboard() {
                 </div>
               </div>
             </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   )
 }

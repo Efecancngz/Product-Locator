@@ -24,7 +24,7 @@ class SearchOrchestrator:
         self.max_results = 5
         self.page_timeout = 45000  # Increased for slow pages
         
-    async def search(self, query: str, city: Optional[str] = None, district: Optional[str] = None) -> List[Dict]:
+    async def search(self, query: str, city: Optional[str] = None, district: Optional[str] = None, category: Optional[str] = None) -> List[Dict]:
         """
         Main search method.
         
@@ -32,6 +32,7 @@ class SearchOrchestrator:
             query: Product search query
             city: Optional city filter
             district: Optional district filter
+            category: Optional category filter
             
         Returns:
             List of product dictionaries with store info
@@ -43,7 +44,7 @@ class SearchOrchestrator:
         
         # Step 1: Get relevant URLs via direct site search
         # Note: Pass original query, not search_query (extra terms break filtering)
-        urls = await self._google_search(query)
+        urls = await self._google_search(query, category)
         
         if not urls:
             logger.warning("[Orchestrator] No URLs found from Google search")
@@ -102,7 +103,7 @@ class SearchOrchestrator:
             base_query += f" {city}"
         return base_query
     
-    async def _google_search(self, query: str) -> List[str]:
+    async def _google_search(self, query: str, category: Optional[str] = None) -> List[str]:
         """
         Search using direct site scraping (DuckDuckGo is unreliable).
         Uses GenericSiteSearcher to search directly on known e-commerce sites.
@@ -112,7 +113,7 @@ class SearchOrchestrator:
         urls = []
         
         try:
-            searcher = GenericSiteSearcher()
+            searcher = GenericSiteSearcher(category=category)
             # Search with just the query (not the full search_query with "fiyat stok mağaza")
             results = await searcher.search(query, limit=self.max_results)
             
@@ -215,20 +216,22 @@ class SearchOrchestrator:
     
     def _filter_by_location(self, products: List[Dict], city: str, district: Optional[str] = None) -> List[Dict]:
         """Filter products by city and optionally district."""
+        from src.services.store_service import store_service
+        
         filtered = []
-        city_lower = city.lower()
-        district_lower = district.lower() if district else None
+        city_norm = store_service._normalize_name(city)
+        district_norm = store_service._normalize_name(district) if district else None
         
         for product in products:
             store_info = product.get("store_info", {})
-            product_city = store_info.get("city", "").lower()
-            product_district = store_info.get("district", "").lower()
+            product_city = store_service._normalize_name(store_info.get("city", ""))
+            product_district = store_service._normalize_name(store_info.get("district", ""))
             
             # City match
-            if city_lower in product_city or product_city in city_lower:
+            if city_norm in product_city or product_city in city_norm:
                 # District match (if specified)
-                if district_lower:
-                    if district_lower in product_district or product_district in district_lower:
+                if district_norm:
+                    if district_norm in product_district or product_district in district_norm:
                         filtered.append(product)
                 else:
                     filtered.append(product)

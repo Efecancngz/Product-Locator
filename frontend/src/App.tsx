@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Search, Store, List, Map as MapIcon, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,7 @@ import { LocationSelector } from '@/components/filters/LocationSelector'
 import { CategoryFilter, StoreCategory } from '@/components/filters/CategoryFilter'
 import { ProductListWithPagination } from '@/components/ProductListWithPagination'
 import { AdminDashboard } from '@/components/AdminDashboard'
-import gsap from 'gsap'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const queryClient = new QueryClient()
 
@@ -33,15 +33,6 @@ function SearchApp() {
   const [selectedDistrict, setSelectedDistrict] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<StoreCategory>('all')
   const [placeholderText, setPlaceholderText] = useState('')
-
-  // Refs for GSAP
-  const heroRef = useRef<HTMLDivElement>(null)
-  const searchBarRef = useRef<HTMLDivElement>(null)
-  const resultsRef = useRef<HTMLDivElement>(null)
-  const navRef = useRef<HTMLElement>(null)
-  const heroTitleRef = useRef<HTMLHeadingElement>(null)
-  const heroSubRef = useRef<HTMLParagraphElement>(null)
-  const gridBgRef = useRef<HTMLDivElement>(null)
 
   const { data, isLoading, isError } = useProductSearch(
     searchId,
@@ -86,57 +77,6 @@ function SearchApp() {
     return () => clearTimeout(timeout)
   }, [])
 
-  // Hero entrance animation
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-
-      tl.fromTo(gridBgRef.current, { opacity: 0 }, { opacity: 1, duration: 1.5 })
-        .fromTo(heroTitleRef.current, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9 }, '-=1')
-        .fromTo(heroSubRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, '-=0.5')
-        .fromTo(searchBarRef.current, { y: 40, opacity: 0, scale: 0.95 }, { y: 0, opacity: 1, scale: 1, duration: 0.8 }, '-=0.4')
-    })
-
-    return () => ctx.revert()
-  }, [])
-
-  // Transition: Hero → Results
-  useEffect(() => {
-    if (searchId > 0 && heroRef.current && searchBarRef.current) {
-      const ctx = gsap.context(() => {
-        const tl = gsap.timeline({ defaults: { ease: 'power2.inOut' } })
-
-        // Fade out hero text
-        if (heroTitleRef.current && heroSubRef.current) {
-          tl.to([heroTitleRef.current, heroSubRef.current], {
-            y: -30, opacity: 0, duration: 0.4, stagger: 0.05
-          })
-        }
-
-        // Shrink grid bg
-        if (gridBgRef.current) {
-          tl.to(gridBgRef.current, { opacity: 0.3, duration: 0.5 }, '-=0.3')
-        }
-
-        // Move search bar to top
-        tl.to(searchBarRef.current, {
-          scale: 0.92, duration: 0.5
-        }, '-=0.3')
-      })
-      return () => ctx.revert()
-    }
-  }, [searchId])
-
-  // Animate results area
-  useEffect(() => {
-    if (!isLoading && data && resultsRef.current) {
-      gsap.fromTo(resultsRef.current,
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }
-      )
-    }
-  }, [isLoading, data])
-
   const handleSearch = () => {
     if (searchQuery.trim().length > 2) {
       setCurrentSearchQuery(searchQuery)
@@ -152,33 +92,21 @@ function SearchApp() {
     setSearchId(0)
     setSearchQuery('')
     setCurrentSearchQuery('')
-
-    // Animate back
-    if (heroTitleRef.current && heroSubRef.current) {
-      gsap.fromTo([heroTitleRef.current, heroSubRef.current],
-        { y: -20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: 'power2.out' }
-      )
-    }
-    if (gridBgRef.current) {
-      gsap.to(gridBgRef.current, { opacity: 1, duration: 0.8 })
-    }
-    if (searchBarRef.current) {
-      gsap.to(searchBarRef.current, { scale: 1, duration: 0.4 })
-    }
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
 
       {/* Animated grid background */}
-      <div
-        ref={gridBgRef}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: searchId > 0 ? 0.25 : 1 }}
+        transition={{ duration: 1.0, ease: 'easeInOut' }}
         className="fixed inset-0 grid-bg grid-bg-fade gradient-mesh pointer-events-none z-0"
       />
 
       {/* Navbar */}
-      <header ref={navRef} className="glass-strong z-50 sticky top-0">
+      <header className="glass-strong z-50 sticky top-0">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div
             className="flex items-center gap-2.5 font-bold text-xl cursor-pointer group"
@@ -229,40 +157,46 @@ function SearchApp() {
       <main className="flex-1 flex flex-col relative z-10">
 
         {/* Search Overlay */}
-        <div
-          ref={heroRef}
-          className={`transition-all duration-500 ease-in-out z-20 w-full flex flex-col items-center pointer-events-none
-            ${searchId > 0 ? 'absolute top-4' : 'absolute top-1/2 -translate-y-1/2'}
+        <motion.div
+          layout
+          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+          className={`z-20 w-full flex flex-col items-center pointer-events-none absolute left-0 right-0
+            ${searchId > 0 ? 'top-4 translate-y-0' : 'top-1/2 -translate-y-1/2'}
           `}
         >
           <div className="pointer-events-auto w-full max-w-3xl px-4 flex flex-col items-center gap-6">
 
             {/* Hero Text */}
-            {searchId === 0 && (
-              <div className="text-center space-y-5 mb-2">
-                <h1
-                  ref={heroTitleRef}
-                  className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]"
+            <AnimatePresence>
+              {searchId === 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-center space-y-5 mb-2 w-full"
                 >
-                  Aradığın ürünü{' '}
-                  <br />
-                  <span className="gradient-text">şehrinde bul.</span>
-                </h1>
-                <p
-                  ref={heroSubRef}
-                  className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto"
-                >
-                  25+ mağazanın stokunu tarıyoruz,
-                  <br className="hidden md:block" />{' '}
-                  en yakın mağazayı haritada gösteriyoruz.
-                </p>
-              </div>
-            )}
+                  <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
+                    Aradığın ürünü{' '}
+                    <br />
+                    <span className="gradient-text">şehrinde bul.</span>
+                  </h1>
+                  <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto">
+                    25+ mağazanın stokunu tarıyoruz,
+                    <br className="hidden md:block" />{' '}
+                    en yakın mağazayı haritada gösteriyoruz.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Search Bar */}
-            <div
-              ref={searchBarRef}
-              className="w-full max-w-4xl glass-strong rounded-2xl shadow-xl glow-primary flex flex-col md:flex-row gap-2 p-2"
+            <motion.div
+              layout
+              initial={{ y: 40, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: searchId > 0 ? 0.92 : 1 }}
+              transition={{ type: 'spring', stiffness: 100, damping: 15 }}
+              className="w-full max-w-4xl glass-strong rounded-2xl shadow-xl glow-primary flex flex-col md:flex-row gap-2 p-2 pointer-events-auto"
             >
               <div className="flex-1 flex gap-2 w-full">
                 <div className="relative flex-1">
@@ -305,58 +239,63 @@ function SearchApp() {
                   )}
                 </Button>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Results Area */}
-        {searchId > 0 && (
-          <div
-            ref={resultsRef}
-            className="flex-1 w-full pt-28 px-4 pb-4 container mx-auto"
-            style={{ minHeight: '500px' }}
-          >
-            {isLoading ? (
-              <div className="w-full h-full flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  {/* Radar loading animation */}
-                  <div className="relative w-20 h-20 mx-auto mb-6">
-                    <div className="absolute inset-0 rounded-full gradient-primary opacity-20 animate-ping" />
-                    <div className="absolute inset-2 rounded-full gradient-primary opacity-30 animate-ping" style={{ animationDelay: '0.3s' }} />
-                    <div className="absolute inset-4 rounded-full gradient-primary opacity-60 flex items-center justify-center">
-                      <Search className="w-5 h-5 text-white" />
+        <AnimatePresence>
+          {searchId > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 30 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="flex-1 w-full pt-28 px-4 pb-4 container mx-auto"
+              style={{ minHeight: '500px' }}
+            >
+              {isLoading ? (
+                <div className="w-full h-full flex items-center justify-center min-h-[400px]">
+                  <div className="text-center">
+                    {/* Radar loading animation */}
+                    <div className="relative w-20 h-20 mx-auto mb-6">
+                      <div className="absolute inset-0 rounded-full gradient-primary opacity-20 animate-ping" />
+                      <div className="absolute inset-2 rounded-full gradient-primary opacity-30 animate-ping" style={{ animationDelay: '0.3s' }} />
+                      <div className="absolute inset-4 rounded-full gradient-primary opacity-60 flex items-center justify-center">
+                        <Search className="w-5 h-5 text-white" />
+                      </div>
                     </div>
+                    <p className="text-muted-foreground text-lg font-medium">Mağazalar taranıyor...</p>
+                    <p className="text-muted-foreground/60 text-sm mt-2">Bu işlem 30-120 saniye sürebilir</p>
                   </div>
-                  <p className="text-muted-foreground text-lg font-medium">Mağazalar taranıyor...</p>
-                  <p className="text-muted-foreground/60 text-sm mt-2">Bu işlem 30-120 saniye sürebilir</p>
                 </div>
-              </div>
-            ) : isError ? (
-              <div className="w-full h-full flex items-center justify-center text-destructive min-h-[400px]">
-                <div className="text-center glass-strong rounded-2xl p-8">
-                  <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-3xl">⚠️</span>
+              ) : isError ? (
+                <div className="w-full h-full flex items-center justify-center text-destructive min-h-[400px]">
+                  <div className="text-center glass-strong rounded-2xl p-8">
+                    <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-3xl">⚠️</span>
+                    </div>
+                    <p className="text-lg font-semibold mb-2">Bir hata oluştu</p>
+                    <p className="text-muted-foreground text-sm">Lütfen tekrar deneyin.</p>
                   </div>
-                  <p className="text-lg font-semibold mb-2">Bir hata oluştu</p>
-                  <p className="text-muted-foreground text-sm">Lütfen tekrar deneyin.</p>
                 </div>
-              </div>
-            ) : (
-              <div
-                className="w-full glass-strong rounded-2xl overflow-hidden shadow-xl relative"
-                style={{ minHeight: viewMode === 'map' ? '500px' : 'auto' }}
-              >
-                {viewMode === 'map' ? (
-                  <div style={{ height: '500px', width: '100%' }}>
-                    <StoreMap products={data?.found_products || []} />
-                  </div>
-                ) : (
-                  <ProductListWithPagination products={data?.found_products || []} totalFound={data?.total_found || 0} />
-                )}
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <div
+                  className="w-full glass-strong rounded-2xl overflow-hidden shadow-xl relative"
+                  style={{ minHeight: viewMode === 'map' ? '500px' : 'auto' }}
+                >
+                  {viewMode === 'map' ? (
+                    <div style={{ height: '500px', width: '100%' }}>
+                      <StoreMap products={data?.found_products || []} />
+                    </div>
+                  ) : (
+                    <ProductListWithPagination products={data?.found_products || []} totalFound={data?.total_found || 0} />
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Footer */}
@@ -369,14 +308,43 @@ function SearchApp() {
   )
 }
 
+function AnimatedRoutes() {
+  const location = useLocation()
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+            className="w-full h-full"
+          >
+            <SearchApp />
+          </motion.div>
+        } />
+        <Route path="/admin" element={
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+            className="w-full h-full"
+          >
+            <AdminDashboard />
+          </motion.div>
+        } />
+      </Routes>
+    </AnimatePresence>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <Routes>
-          <Route path="/" element={<SearchApp />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
+        <AnimatedRoutes />
       </Router>
     </QueryClientProvider>
   )

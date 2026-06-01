@@ -14,14 +14,38 @@ export function StoreMap({ products, className }: StoreMapProps) {
     // Default to Turkey/İzmir center
     const defaultCenter: [number, number] = [38.4237, 27.1428];
 
-    // Filter products with valid coordinates
+    // Filter products with valid coordinates and add jitter to overlapping pins
     const validProducts = useMemo(() => {
-        return products.filter(p =>
-            p.store_location.latitude &&
-            p.store_location.longitude &&
-            !isNaN(p.store_location.latitude) &&
-            !isNaN(p.store_location.longitude)
-        );
+        const seenCoords = new Set<string>();
+        
+        return products
+            .filter(p => 
+                p.store_location.latitude &&
+                p.store_location.longitude &&
+                !isNaN(p.store_location.latitude) &&
+                !isNaN(p.store_location.longitude)
+            )
+            .map(p => {
+                let lat = p.store_location.latitude!;
+                let lng = p.store_location.longitude!;
+                const coordKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+                
+                // If coordinates overlap, add a small jitter (approx 200-500 meters)
+                if (seenCoords.has(coordKey)) {
+                    lat += (Math.random() - 0.5) * 0.004;
+                    lng += (Math.random() - 0.5) * 0.004;
+                }
+                seenCoords.add(coordKey);
+                
+                return {
+                    ...p,
+                    store_location: {
+                        ...p.store_location,
+                        latitude: lat,
+                        longitude: lng
+                    }
+                };
+            });
     }, [products]);
 
     // Calculate center and zoom from valid products
