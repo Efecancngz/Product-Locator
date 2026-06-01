@@ -120,7 +120,7 @@ Standart fiyat karşılaştırma motorlarının (Akakçe, Cimri vb.) aksine **Pr
 | Framework | React 19 + TypeScript 5 | UI |
 | Build | Vite 6 | Dev server & bundler |
 | Stil | Tailwind CSS v4 | Utility-first CSS |
-| Animasyon | GSAP 3 | Geçiş animasyonları |
+| Animasyon | Framer Motion | Mikro-etkileşimler ve sayfa geçişleri |
 | Harita | pigeon-maps | OpenStreetMap tabanlı |
 | Server State | TanStack Query v5 | API caching |
 
