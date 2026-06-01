@@ -59,7 +59,7 @@ src/
 | TypeScript 5 | Tip güvenliği |
 | Vite 6 | Build tool |
 | Tailwind CSS v4 | Stil |
-| GSAP 3 | Animasyonlar |
+| Framer Motion | Premium mikro-etkileşimler ve sayfa geçişleri |
 | pigeon-maps | Harita (OpenStreetMap) |
 | TanStack Query v5 | Server state & caching |
 | Lucide React | İkonlar |

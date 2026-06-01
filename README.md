@@ -127,7 +127,7 @@ Unlike standard price comparison engines (such as Akakçe or Cimri) which primar
 | Framework | React 19 + TypeScript 5 | Premium modern web architecture |
 | Tooling | Vite 6 | Lightning-fast build tool & dev server |
 | Styling | Vanilla CSS / Tailwind | Sleek dark-mode, glassmorphism UI |
-| Animation | GSAP 3 | Micro-interactions and smooth transitions |
+| Animation | Framer Motion | Dynamic page transitions and spring micro-interactions |
 | Mapping | pigeon-maps | OpenStreetMap-based responsive map interface |
 | State | TanStack Query v5 | Server state caching and refetching |
 
