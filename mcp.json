@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "notebooklm": {
+            "command": "C:\\Users\\efeca\\.local\\bin\\nlm.exe",
+            "args": [
+                "mcp"
+            ],
+            "disabled": false,
+            "autoApprove": []
+        }
+    }
+}

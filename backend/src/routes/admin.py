@@ -378,6 +378,7 @@ class ReportSettingsModel(BaseModel):
     smtp_username: str = ""
     smtp_password: str = ""
     smtp_from: str = ""
+    webhook_url: str = ""
 
 # In-memory fallback for report settings (persisted in MongoDB when available)
 _report_settings_cache: dict = {}
@@ -385,7 +386,7 @@ _report_settings_cache: dict = {}
 @router.get(
     "/admin/reports/settings",
     summary="Get Report & Notification Settings",
-    description="Retrieves saved Telegram/Email notification channel configuration.",
+    description="Retrieves saved Telegram/Email/Webhook notification channel configuration.",
 )
 async def get_report_settings():
     global _report_settings_cache
@@ -403,7 +404,7 @@ async def get_report_settings():
 @router.post(
     "/admin/reports/settings",
     summary="Save Report & Notification Settings",
-    description="Saves Telegram bot token, chat ID, and SMTP email credentials for the alerting pipeline.",
+    description="Saves Telegram bot token, chat ID, Webhook URL, and SMTP email credentials for the alerting pipeline.",
 )
 async def save_report_settings(payload: ReportSettingsModel):
     global _report_settings_cache
@@ -426,7 +427,7 @@ async def save_report_settings(payload: ReportSettingsModel):
 @router.post(
     "/admin/reports/test-trigger",
     summary="Test Report Notification",
-    description="Sends a test scraper alert notification through the configured Telegram/Email channels via ReportSystem.",
+    description="Sends a test scraper alert notification through the configured Telegram/Email/Webhook channels.",
 )
 async def test_report_trigger():
     global _report_settings_cache
@@ -439,6 +440,7 @@ async def test_report_trigger():
 
     telegram_config = None
     email_config = None
+    webhook_url = cfg.get("webhook_url", "")
 
     if cfg.get("telegram_bot_token") and cfg.get("telegram_chat_id"):
         telegram_config = {
@@ -462,7 +464,26 @@ async def test_report_trigger():
         telegram_config=telegram_config,
         email_config=email_config
     )
-    return {"message": "Test notification triggered.", "result": result}
+    
+    webhook_result = None
+    if webhook_url:
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.post(webhook_url, json={
+                    "event": "test_alert",
+                    "store_name": "Test Mağaza (Simülasyon)",
+                    "message": "Bu bir test webhook bildirimidir. Entegrasyon başarıyla çalışmaktadır!"
+                })
+                webhook_result = {"status": resp.status_code, "body": resp.text}
+        except Exception as err:
+            webhook_result = {"error": str(err)}
+
+    return {
+        "message": "Test notification triggered.",
+        "result": result,
+        "webhook": webhook_result
+    }
 
 
 # --- Manual Product CRUD API Endpoints ---

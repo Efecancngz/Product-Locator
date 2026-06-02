@@ -148,6 +148,7 @@ Canlıya aldığınız projenin CV değerini artıracak profesyonel adımlar:
 ### MongoDB / In-Memory (Çift Modlu Çalışma)
 Manuel Stok Girişi sistemi MongoDB Atlas veya yerel MongoDB üzerinde `manual_products` koleksiyonunda saklanır. Ancak canlı sunucu maliyetlerinizi sıfırlamak isterseniz, veritabanı kurmadan bile uygulama **Dual-Mode** sayesinde bellekte (In-Memory) çalışmaya devam eder. Ürün girişi yaparken koordinatlar için entegre Pigeon-Maps **Map Picker** (Harita Seçici) harici bir API key gerektirmediğinden anında çalışır.
 
-### ReportSystem Servis Durumu
+### ReportSystem & Custom Şablonları & Webhooks
 * Java tabanlı `report-system` mikroservisi, **`docker-compose.yml` dosyası içerisinde doğrudan Docker Hub üzerindeki resmi `novaity/report-system:latest` imajından çekilecek şekilde tanımlanmıştır**.
-* Bu sayede lokal bilgisayara hiçbir Java/ReportSystem kaynak kodu klonlanmasına gerek kalmadan, tek bir komutla (`docker compose up`) Telegram, E-posta ve SMS bildirim servisleri otomatik olarak ayağa kalkar!
+* **Özel Bildirim Şablonları:** Host makinenizdeki `./templates` dizininde yer alan Türkçe FreeMarker şablonları (`in_stock_alert.ftl` ve `scraper_alert.ftl`), volume mount aracılığıyla ReportSystem konteyneri içerisine (`/app/templates`) dinamik olarak bağlanır. Bu sayede bildirim e-postaları ve mesajları anında Türkçe olarak özelleştirilmiş şekilde iletilir.
+* **Webhook Desteği:** Fiyat veya stok değişimlerinde, admin panelinden ayarlayabileceğiniz **Webhook URL**'sine gerçek zamanlı HTTP POST JSON payload'ı fırlatılır. Bu sayede sistemi Slack, Discord veya harici diğer otomasyon botlarıyla kolayca entegre edebilirsiniz.
