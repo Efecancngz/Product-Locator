@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.config.settings import settings
-from src.routes import search, admin
+from src.routes import search, admin, watchlist
 import sys
 import asyncio
 import logging
@@ -120,6 +120,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
+app.include_router(watchlist.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
