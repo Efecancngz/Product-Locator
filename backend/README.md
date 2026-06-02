@@ -53,11 +53,13 @@ backend/
     │
     ├── models/
     │   ├── product.py          # Domain models (ProductStock, StoreLocation, SearchResult)
-    │   └── store.py            # StoreConfigModel (Pydantic v2 validation schema for Admin)
+    │   ├── store.py            # StoreConfigModel (Pydantic v2 validation schema for Admin)
+    │   └── watchlist.py        # Watchlist model and schemas [NEW]
     │
     ├── routes/
     │   ├── search.py           # GET /api/v1/search (IP-based rate limited search route)
-    │   └── admin.py            # /api/v1/admin/stores (SaaS Dynamic Store CRUD endpoints)
+    │   ├── admin.py            # /api/v1/admin/stores (SaaS Dynamic Store CRUD endpoints)
+    │   └── watchlist.py        # /api/v1/watchlist (Watchlist CRUD, alert and check endpoints) [NEW]
     │
     ├── services/
     │   ├── db_service.py       # Dual-Mode Cache (MongoDB / In-Memory Fallback) & registry syncing
@@ -133,8 +135,11 @@ A resilient parser based on BeautifulSoup4. Invoked automatically if Gemini API 
 This project maintains rigorous software QA standards based on the IEEE 829 QA specifications. You can execute the test suite via `pytest`:
 
 ```bash
-# Execute all security, rate-limiting, validations, and Admin CRUD integration tests
+# Execute all security, rate-limiting, validations, Admin CRUD, and watchlist integration tests
 python -m pytest
+
+# Run watchlist alert and check unit tests specifically
+python -m pytest tests/test_watchlist.py
 
 # Execute developer-level debugging scripts
 python test_search.py

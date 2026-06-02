@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { ProductStock } from '@/types/api'
-import { Store, ExternalLink, MapPin } from 'lucide-react'
+import { Store, ExternalLink, MapPin, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/ui/Pagination'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface ProductListWithPaginationProps {
     products: ProductStock[]
     totalFound: number
+    watchlist?: any[]
+    onToggleFollow?: (product: ProductStock) => void
 }
 
 const ITEMS_PER_PAGE = 9
@@ -36,7 +38,12 @@ const itemVariants = {
     }
 }
 
-export function ProductListWithPagination({ products, totalFound }: ProductListWithPaginationProps) {
+export function ProductListWithPagination({ 
+    products, 
+    totalFound, 
+    watchlist = [], 
+    onToggleFollow 
+}: ProductListWithPaginationProps) {
     const [currentPage, setCurrentPage] = useState(1)
 
     // Reset to page 1 when products change
@@ -199,27 +206,58 @@ export function ProductListWithPagination({ products, totalFound }: ProductListW
                                     </div>
                                 </div>
 
-                                {/* Price and Action */}
-                                <div className="flex justify-between items-center pt-3 border-t border-border/50">
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-muted-foreground">Fiyat</span>
-                                        <span className="font-bold text-xl gradient-text">
-                                            {typeof product.price === 'number'
-                                                ? product.price.toLocaleString('tr-TR')
-                                                : product.price} {product.currency}
-                                        </span>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        className="gradient-primary text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
-                                        asChild
-                                    >
-                                        <a href={product.source_url} target="_blank" rel="noreferrer">
-                                            <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                                            Mağazaya Git
-                                        </a>
-                                    </Button>
-                                </div>
+                                 {/* Price and Action */}
+                                 {(() => {
+                                     const isFollowed = watchlist.some(
+                                         item =>
+                                             item.product_name === product.product_name &&
+                                             item.store_name === product.store_location.store_name &&
+                                             item.city === product.store_location.city &&
+                                             (item.branch || '') === (product.store_location.branch || '')
+                                     );
+                                     return (
+                                         <div className="flex justify-between items-center pt-3 border-t border-border/50">
+                                             <div className="flex flex-col">
+                                                 <span className="text-xs text-muted-foreground">Fiyat</span>
+                                                 <span className="font-bold text-xl gradient-text">
+                                                     {typeof product.price === 'number'
+                                                         ? product.price.toLocaleString('tr-TR')
+                                                         : product.price} {product.currency}
+                                                 </span>
+                                             </div>
+                                             <div className="flex gap-2">
+                                                 {onToggleFollow && (
+                                                     <Button
+                                                         variant="outline"
+                                                         size="sm"
+                                                         onClick={() => onToggleFollow(product)}
+                                                         className={`h-8 px-2.5 rounded-lg border-primary/20 hover:border-primary/50 transition-all ${
+                                                             isFollowed ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'text-muted-foreground'
+                                                         }`}
+                                                     >
+                                                         <motion.div
+                                                             whileTap={{ scale: 0.8 }}
+                                                             whileHover={{ scale: 1.1 }}
+                                                             transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                                                         >
+                                                             <Star className={`w-4 h-4 ${isFollowed ? 'fill-amber-400 text-amber-400' : ''}`} />
+                                                         </motion.div>
+                                                     </Button>
+                                                 )}
+                                                 <Button
+                                                     size="sm"
+                                                     className="gradient-primary text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
+                                                     asChild
+                                                 >
+                                                     <a href={product.source_url} target="_blank" rel="noreferrer">
+                                                         <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                                                         Mağazaya Git
+                                                     </a>
+                                                 </Button>
+                                             </div>
+                                         </div>
+                                     );
+                                 })()}
                             </motion.div>
                         ))}
                     </AnimatePresence>

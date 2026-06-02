@@ -145,16 +145,20 @@ class StoreService:
         if not name:
             return ""
         
-        # Lowercase
-        result = name.lower().strip()
-        
-        # Turkish character normalization
+        # Turkish character normalization (before lowercase to catch capital İ)
         tr_chars = {
             "ı": "i", "ğ": "g", "ü": "u", "ş": "s", "ö": "o", "ç": "c",
             "İ": "i", "Ğ": "g", "Ü": "u", "Ş": "s", "Ö": "o", "Ç": "c"
         }
+        result = name.strip()
         for tr, en in tr_chars.items():
             result = result.replace(tr, en)
+            
+        # Lowercase
+        result = result.lower()
+        
+        # Clean up combining dot character if it exists
+        result = result.replace("\u0307", "")
         
         return result
     
