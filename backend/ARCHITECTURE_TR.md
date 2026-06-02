@@ -77,7 +77,12 @@ async def search_products(q: str, city: str, district: str) -> SearchResult
 - Playwright browser lifecycle yönetimi
 - AIParser ve FallbackParser'ı zincirler
 
-### 3. Parser Katmanı
+### 4. Takip Sistemi (Watchlist) & Alert Pipeline (`src/routes/watchlist.py`)
+- **CRUD Yönetimi:** Kullanıcının takip ettiği ürünleri MongoDB veya thread-safe in-memory cache üzerinde ekler, günceller ve siler.
+- **Stok & Fiyat Değişim Tespiti (`/watchlist/check`):** Takipteki tüm ürünleri arka planda güncel aramayla sorgular. `OUT_OF_STOCK` durumundan `IN_STOCK` durumuna geçişleri veya fiyat düşüşlerini algılar.
+- **Çok Kanallı Bildirim Entegrasyonu:** Değişiklik tespit edildiğinde `ReportSystem` (SMTP/Telegram) üzerinden uyarı fırlatır ve admin panelinde tanımlı olan harici **Webhook URL**'sine HTTP POST payload'ı gönderir.
+
+### 5. Parser Katmanı
 
 | Parser | Koşul | Yöntem |
 |---|---|---|
@@ -128,6 +133,27 @@ SearchResult
                                    ├── address: Optional[str]
                                    ├── latitude: Optional[float]
                                    └── longitude: Optional[float]
+```
+
+#### Watchlist Modeli (WatchlistItemResponse)
+```
+WatchlistItemResponse
+├── id: str
+├── user_id: str
+├── product_name: str
+├── category: str
+├── city: str
+├── district: Optional[str]
+├── store_name: str
+├── branch: Optional[str]
+├── price: Optional[float]
+├── currency: str
+├── source_url: str
+├── notifications_enabled: bool
+├── last_stock_status: str
+├── last_price: Optional[float]
+├── created_at: datetime
+└── updated_at: datetime
 ```
 
 ---

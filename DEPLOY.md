@@ -152,6 +152,7 @@ To make your CV portfolio look absolutely bulletproof for tech leads:
 ### MongoDB / In-Memory (Dual-Mode Design)
 The Manual Stock Entry system operates in the `manual_products` collection under MongoDB/Atlas. To keep hosting 100% free, the database acts in **Dual-Mode**, seamlessly falling back to a secure thread-safe In-Memory Cache if MongoDB is unconfigured or offline. Selecting branch coordinates via the interactive **Map Picker** (Pigeon-Maps) runs client-side and requires zero paid Google Maps API keys.
 
-### ReportSystem Deployment Status
+### ReportSystem & Custom Templates & Webhooks
 * The Java-based `report-system` microservice is **fully integrated and active by default inside `docker-compose.yml`**, pulling directly from the public Docker Hub registry image `novaity/report-system:latest`.
-* This eliminates any need to clone the Java source code repository locally. Simply executing a single command (`docker-compose up`) pulls the image and boots up all notification channels (Telegram, Email, and SMS alerts) automatically.
+* **Custom Notification Templates:** The Turkish FreeMarker templates (`in_stock_alert.ftl` and `scraper_alert.ftl`) inside the host `./templates` folder are dynamically mounted into the ReportSystem container's `/app/templates` path. This customizes all alert emails and messages to Turkish out of the box.
+* **Webhook Callbacks:** When price drops or stock status transitions are detected, the backend fires real-time HTTP POST JSON payloads to a custom **Webhook URL** configurable inside the Admin settings panel. This enables instant integrations with communication servers like Slack or Discord.

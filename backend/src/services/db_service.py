@@ -551,6 +551,193 @@ class DatabaseService:
 
         return results
 
+    # ==========================================
+    # WATCHLIST OPERATIONS
+    # ==========================================
+
+    async def add_to_watchlist(self, user_id: str, item_data: Dict[str, Any]) -> Optional[str]:
+        """Add a followed product to the user's watchlist. Returns watchlist item ID."""
+        now = datetime.now(timezone.utc)
+        item_data["user_id"] = user_id
+        item_data["created_at"] = now
+        item_data["updated_at"] = now
+        item_data.setdefault("last_stock_status", "UNKNOWN")
+        item_data.setdefault("last_price", item_data.get("price"))
+
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                # Avoid duplicates: same user, product_name, store_name, branch, city
+                existing = await self.db.watchlist.find_one({
+                    "user_id": user_id,
+                    "product_name": item_data["product_name"],
+                    "store_name": item_data["store_name"],
+                    "branch": item_data.get("branch"),
+                    "city": item_data["city"]
+                })
+                if existing:
+                    logger.info(f"[DBService] Watchlist item already exists: {str(existing['_id'])}")
+                    return str(existing["_id"])
+
+                result = await self.db.watchlist.insert_one(item_data)
+                item_id = str(result.inserted_id)
+                logger.info(f"[DBService] Watchlist item added to MongoDB: {item_id}")
+                return item_id
+            except Exception as e:
+                logger.error(f"[DBService] Failed to add watchlist item to MongoDB: {e}")
+                return None
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_watchlist_cache'):
+            self._watchlist_cache: List[Dict[str, Any]] = []
+
+        for p in self._watchlist_cache:
+            if (p.get("user_id") == user_id and
+                p.get("product_name") == item_data["product_name"] and
+                p.get("store_name") == item_data["store_name"] and
+                p.get("branch") == item_data.get("branch") and
+                p.get("city") == item_data["city"]):
+                logger.info(f"[DBService] Watchlist item already exists in memory: {p.get('_id')}")
+                return p.get("_id")
+
+        import uuid
+        item_id = str(uuid.uuid4())[:8]
+        item_data["_id"] = item_id
+        self._watchlist_cache.append(item_data)
+        logger.info(f"[DBService] Watchlist item added to In-Memory: {item_id}")
+        return item_id
+
+    async def get_watchlist(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get all followed watchlist items for a specific user."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                cursor = self.db.watchlist.find({"user_id": user_id}).sort("created_at", -1)
+                items = await cursor.to_list(length=500)
+                for item in items:
+                    if "_id" in item:
+                        item["id"] = str(item.pop("_id"))
+                return items
+            except Exception as e:
+                logger.error(f"[DBService] Failed to get watchlist from MongoDB: {e}")
+                return []
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_watchlist_cache'):
+            self._watchlist_cache = []
+        user_items = [p for p in self._watchlist_cache if p.get("user_id") == user_id]
+        
+        # Sort by created_at descending
+        user_items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        
+        paginated = []
+        for p in user_items:
+            item = dict(p)
+            if "_id" in item and "id" not in item:
+                item["id"] = item["_id"]
+            paginated.append(item)
+        return paginated
+
+    async def get_watchlist_item_by_id(self, item_id: str) -> Optional[Dict[str, Any]]:
+        """Get a single watchlist item by database ID."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                from bson import ObjectId
+                doc = await self.db.watchlist.find_one({"_id": ObjectId(item_id)})
+                if doc:
+                    doc["id"] = str(doc.pop("_id"))
+                    return doc
+            except Exception as e:
+                logger.error(f"[DBService] Failed to get watchlist item '{item_id}' from MongoDB: {e}")
+            return None
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_watchlist_cache'):
+            return None
+        for p in self._watchlist_cache:
+            if p.get("_id") == item_id:
+                result = dict(p)
+                result["id"] = result.pop("_id", item_id)
+                return result
+        return None
+
+    async def delete_from_watchlist(self, user_id: str, item_id: str) -> bool:
+        """Delete an item from a user's watchlist."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                from bson import ObjectId
+                result = await self.db.watchlist.delete_one({"_id": ObjectId(item_id), "user_id": user_id})
+                logger.info(f"[DBService] Deleted watchlist item '{item_id}' from MongoDB. Count: {result.deleted_count}")
+                return result.deleted_count > 0
+            except Exception as e:
+                logger.error(f"[DBService] Failed to delete watchlist item '{item_id}' from MongoDB: {e}")
+                return False
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_watchlist_cache'):
+            return False
+        original_len = len(self._watchlist_cache)
+        self._watchlist_cache = [p for p in self._watchlist_cache if not (p.get("_id") == item_id and p.get("user_id") == user_id)]
+        deleted = len(self._watchlist_cache) < original_len
+        if deleted:
+            logger.info(f"[DBService] Deleted watchlist item '{item_id}' from memory.")
+        return deleted
+
+    async def update_watchlist_item(self, user_id: str, item_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update settings or last checked fields for a watchlist item."""
+        update_data["updated_at"] = datetime.now(timezone.utc)
+
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                from bson import ObjectId
+                result = await self.db.watchlist.update_one(
+                    {"_id": ObjectId(item_id), "user_id": user_id},
+                    {"$set": update_data}
+                )
+                return result.modified_count > 0 or result.matched_count > 0
+            except Exception as e:
+                logger.error(f"[DBService] Failed to update watchlist item '{item_id}' in MongoDB: {e}")
+                return False
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_watchlist_cache'):
+            return False
+        for p in self._watchlist_cache:
+            if p.get("_id") == item_id and p.get("user_id") == user_id:
+                p.update(update_data)
+                logger.info(f"[DBService] Watchlist item '{item_id}' updated in memory.")
+                return True
+        return False
+
+    async def get_all_watchlist_items(self) -> List[Dict[str, Any]]:
+        """Get all watchlist items across all users (used for background stock checks)."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                cursor = self.db.watchlist.find({})
+                items = await cursor.to_list(length=5000)
+                for item in items:
+                    if "_id" in item:
+                        item["id"] = str(item.pop("_id"))
+                return items
+            except Exception as e:
+                logger.error(f"[DBService] Failed to get all watchlist items from MongoDB: {e}")
+                return []
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_watchlist_cache'):
+            return []
+        items = []
+        for p in self._watchlist_cache:
+            item = dict(p)
+            if "_id" in item and "id" not in item:
+                item["id"] = item["_id"]
+            items.append(item)
+        return items
+
 # Singleton
 db_service = DatabaseService()
 
