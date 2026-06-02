@@ -79,6 +79,7 @@ Unlike standard price comparison engines (such as Akakçe or Cimri) which primar
 | **Resilient Scrapers** | Fallback parser using BeautifulSoup4 with upgraded malformed JSON-LD bypass |
 | **SaaS Dynamic Stores** | Live retailer CRUD, active toggle switches, and no-code CSS selectors |
 | **Manual Stock Entry** | Create and manage physical-only store stock entries with coordinate selections via an interactive **Map Picker** (Pigeon-Maps) |
+| **Watchlist Alerts** | Follow products from search results, track price/stock status changes, and receive SMTP/Telegram/Webhook notifications |
 
 ---
 
@@ -240,6 +241,29 @@ curl "http://localhost:8001/api/v1/search?q=iPhone+15+Pro&city=İzmir"
 }
 ```
 
+### SaaS Dynamic Store / Admin API
+
+Manage scrapers and registered physical stores dynamically.
+
+- **GET** `/api/v1/admin/stores` -> Lists all active and configured stores.
+- **GET** `/api/v1/admin/stores/{key}` -> Retrieves details of a specific store.
+- **POST** `/api/v1/admin/stores` -> Dynamically adds a new store configuration.
+- **PATCH** `/api/v1/admin/stores/{key}/toggle` -> Enables or disables a store scraper.
+- **PUT** `/api/v1/admin/stores/{key}` -> Updates store selectors and parameters.
+- **DELETE** `/api/v1/admin/stores/{key}` -> Deletes store configuration.
+
+### User Watchlist & Alerts API
+
+Follow products and receive automated stock/price notifications.
+
+- **GET** `/api/v1/watchlist` -> Retrieves the user's followed watchlist items.
+- **POST** `/api/v1/watchlist` -> Follows a new product.
+- **DELETE** `/api/v1/watchlist/{id}` -> Unfollows a product.
+- **PATCH** `/api/v1/watchlist/{id}/toggle?enabled=...` -> Toggles notification status.
+- **POST** `/api/v1/watchlist/check` -> Triggers background scan check for followed products. Dispatches alert events via SMTP, Telegram, and Webhook callback.
+
+---
+
 ## Manual Stock Entry & Map Picker
 
 Product Locator supports physical-only store stock entries (such as local shopkeepers/esnafs) that do not maintain an online e-commerce website. 
@@ -267,10 +291,12 @@ Product-Locator/
 │       │   └── store_registry.py      # Store templates and in-memory registry
 │       ├── models/
 │       │   ├── product.py             # Product Pydantic models
-│       │   └── store.py               # Store config schemas (Pydantic v2)
+│       │   ├── store.py               # Store config schemas (Pydantic v2)
+│       │   └── watchlist.py           # Watchlist model and schemas [NEW]
 │       ├── routes/
 │       │   ├── search.py              # Search API endpoint (Rate limited)
-│       │   └── admin.py               # SaaS Admin Store CRUD routes
+│       │   ├── admin.py               # SaaS Admin Store CRUD routes
+│       │   └── watchlist.py           # Watchlist API endpoints [NEW]
 │       ├── services/
 │       │   ├── db_service.py          # Dual-Mode Cache (MongoDB / In-Memory)
 │       │   ├── search_orchestrator.py # Multi-retailer browser coordinates
@@ -282,12 +308,16 @@ Product-Locator/
 │
 ├── frontend/
 │   └── src/
-│       ├── App.tsx                    # Main interface entrance
+│       ├── App.tsx                    # Main interface entrance with premium Watchlist Drawer
 │       ├── components/                # Animated glassmorphism elements
 │       ├── hooks/                     # Custom hooks and state fetching
 │       └── types/                     # TS interface definitions
 │
-├── docker-compose.yml
+├── templates/                         # FreeMarker Turkish notification templates for ReportSystem [NEW]
+│   ├── in_stock_alert.ftl
+│   └── scraper_alert.ftl
+│
+├── docker-compose.yml                 # templates volume mapped to report-system container
 └── README.md
 ```
 

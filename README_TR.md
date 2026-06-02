@@ -72,6 +72,7 @@ Standart fiyat karşılaştırma motorlarının (Akakçe, Cimri vb.) aksine **Pr
 | **AI Destekli Parse** | Gemini Flash 2.0 ile HTML'den otomatik ürün çıkarımı |
 | **Fallback Parser** | AI başarısız olursa BeautifulSoup tabanlı gelişmiş yedek sistem |
 | **Manuel Stok Girişi** | Web sitesi bulunmayan yerel esnaflar için haritadan koordinat seçmeli (**Map Picker - Pigeon-Maps**) manuel ürün stok yönetimi |
+| **Kullanıcı Takip Sistemi (Watchlist)** | Aranan ürünleri takibe alma, anlık stok/fiyat değişimlerini izleme ve e-posta, Telegram veya harici Webhook ile bildirim gönderme |
 
 ---
 
@@ -251,6 +252,16 @@ Sisteme dinamik olarak mağaza ekleme, silme, güncelleme veya arama kazıyıcı
 - **PUT** `/api/v1/admin/stores/{key}` -> Mağaza detaylarını veya CSS seçicilerini günceller.
 - **DELETE** `/api/v1/admin/stores/{key}` -> Mağazayı sistemden ve arama listesinden tamamen kaldırır.
 
+### Kullanıcı Takip Listesi (Watchlist) API
+
+Arama sonuçlarındaki ürünlerin fiyat ve stok değişimlerini izlemek ve bildirim almak için kullanılır.
+
+- **GET** `/api/v1/watchlist` -> Kullanıcının takip listesindeki tüm ürünleri listeler.
+- **POST** `/api/v1/watchlist` -> Takip listesine yeni bir ürün ekler.
+- **DELETE** `/api/v1/watchlist/{id}` -> Ürünü takip listesinden çıkarır.
+- **PATCH** `/api/v1/watchlist/{id}/toggle?enabled=...` -> Ürün bildirim durumunu açar/kapatır.
+- **POST** `/api/v1/watchlist/check` -> Takip edilen tüm ürünleri arka planda güncel aramayla denetler. Fiyat düşüşü veya stok girişi tespit edilirse SMTP/Telegram bildirimleri ve harici Webhook URL'sine bildirim gönderir.
+
 ---
 
 ## Proje Yapısı
@@ -269,10 +280,12 @@ Product-Locator/
 │       │   └── store_registry.py      # Statik mağaza tanımları ve veri modelleri
 │       ├── models/
 │       │   ├── product.py             # Ürün veri modelleri
-│       │   └── store.py               # StoreConfigModel (Admin şeması)
+│       │   ├── store.py               # StoreConfigModel (Admin şeması)
+│       │   └── watchlist.py           # WatchlistItem modelleri ve şemaları [NEW]
 │       ├── routes/
 │       │   ├── search.py              # Arama API endpoint'i (Rate limit korumalı)
-│       │   └── admin.py               # SaaS Dinamik Mağaza CRUD rotaları
+│       │   ├── admin.py               # SaaS Dinamik Mağaza CRUD rotaları
+│       │   └── watchlist.py           # Watchlist API rotaları [NEW]
 │       ├── services/
 │       │   ├── db_service.py          # Çift Modlu (MongoDB / In-Memory Fallback) veritabanı & önbellek yönetimi
 │       │   ├── search_orchestrator.py # Arama koordinasyonu
@@ -284,12 +297,16 @@ Product-Locator/
 │
 ├── frontend/
 │   └── src/
-│       ├── App.tsx                    # Ana bileşen
+│       ├── App.tsx                    # Ana bileşen ve premium Watchlist Drawer entegrasyonu
 │       ├── components/                # UI bileşenleri
 │       ├── hooks/                     # Custom hook'lar
 │       └── types/                     # TypeScript tipleri
 │
-├── docker-compose.yml
+├── templates/                         # ReportSystem için FreeMarker Türkçe bildirim şablonları [NEW]
+│   ├── in_stock_alert.ftl
+│   └── scraper_alert.ftl
+│
+├── docker-compose.yml                 # templates dizini volume mount ile report-system'e bağlanmıştır
 └── README.md
 ```
 

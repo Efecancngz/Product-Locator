@@ -66,6 +66,8 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
+    volumes:
+      - ./templates:/app/templates
     networks:
       - app-network
 

@@ -77,7 +77,12 @@ async def search_products(q: str, city: str, district: str) -> SearchResult
 - Manages Playwright browser instance lifecycles.
 - Cascades parsing from the primary `AIParser` to the secondary `FallbackParser`.
 
-### 3. Parser Layer
+### 4. Watchlist & Alert Pipeline (`src/routes/watchlist.py`)
+- **CRUD Operations:** Handles adding, updating, and removing followed items for users, backed by MongoDB or a thread-safe in-memory registry.
+- **Alert Scanner Pipeline (`/watchlist/check`):** Queries and tethers followed items using real-time search logic. Identifies changes like stock transitions (`OUT_OF_STOCK` to `IN_STOCK`) or price drops.
+- **Multi-channel Notifications:** Dispatches email and Telegram notifications via `ReportSystem` Java microservice, and executes a webhook callback to a custom **Webhook URL** defined in settings.
+
+### 5. Parser Layer
 
 | Parser | Condition | Strategy |
 |---|---|---|
@@ -128,6 +133,27 @@ SearchResult
                                    ├── address: Optional[str]
                                    ├── latitude: Optional[float]
                                    └── longitude: Optional[float]
+```
+
+#### Watchlist Model (WatchlistItemResponse)
+```
+WatchlistItemResponse
+├── id: str
+├── user_id: str
+├── product_name: str
+├── category: str
+├── city: str
+├── district: Optional[str]
+├── store_name: str
+├── branch: Optional[str]
+├── price: Optional[float]
+├── currency: str
+├── source_url: str
+├── notifications_enabled: bool
+├── last_stock_status: str
+├── last_price: Optional[float]
+├── created_at: datetime
+└── updated_at: datetime
 ```
 
 ---

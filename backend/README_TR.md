@@ -53,11 +53,13 @@ backend/
     │
     ├── models/
     │   ├── product.py          # ProductStock, StoreLocation, SearchResult
-    │   └── store.py            # StoreConfigModel (Pydantic v2 Admin şeması)
+    │   ├── store.py            # StoreConfigModel (Pydantic v2 Admin şeması)
+    │   └── watchlist.py        # WatchlistItem şemaları [NEW]
     │
     ├── routes/
     │   ├── search.py           # GET /api/v1/search (IP tabanlı rate limit korumalı)
-    │   └── admin.py            # /api/v1/admin/stores (Dinamik Mağaza CRUD, Canlı Simülatör ve Sistem Sağlık Teşhis Rotaları)
+    │   ├── admin.py            # /api/v1/admin/stores (Dinamik Mağaza CRUD, Canlı Simülatör ve Sistem Sağlık Teşhis Rotaları)
+    │   └── watchlist.py        # /api/v1/watchlist (Kullanıcı takip listesi CRUD, bildirim/check uç noktaları) [NEW]
     │
     ├── services/
     │   ├── db_service.py       # Çift Modlu (MongoDB / In-Memory Fallback) veritabanı & önbellek yönetimi
@@ -133,8 +135,11 @@ AI parser başarısız olduğunda devreye giren BeautifulSoup tabanlı yedek.
 Uygulama, IEEE 829 QA standartlarına uygun kapsamlı bir test paketi içerir. Testleri çalıştırmak için:
 
 ```bash
-# Tüm entegrasyon, güvenlik, rate-limiting ve admin CRUD testlerini çalıştır
+# Tüm entegrasyon, güvenlik, rate-limiting, admin CRUD ve watchlist takip testlerini çalıştır
 python -m pytest
+
+# Watchlist takip listesi ve alarm check birim testlerini çalıştır
+python -m pytest tests/test_watchlist.py
 
 # Bireysel geliştirici/hata ayıklama betikleri
 python test_search.py
