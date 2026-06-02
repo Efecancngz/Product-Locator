@@ -50,6 +50,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+mcp.json
 
 # =========================
 # Debug / Temp Artifacts
