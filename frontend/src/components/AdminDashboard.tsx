@@ -4,7 +4,7 @@ import {
   ArrowLeft, Store, Plus, Trash2, Edit3, Globe, FolderOpen, 
   ExternalLink, X, Sparkles, Check, AlertCircle, Loader2, Search,
   Cpu, Database, Activity, Play, Terminal, Bell, Send, Mail, MessageCircle,
-  Settings2, CheckCircle2, MapPin, Package
+  Settings2, CheckCircle2, MapPin, Package, Clock, RefreshCw, Pause, Calendar
 } from 'lucide-react'
 import { apiClient } from '../api/client'
 import { Button } from './ui/button'
@@ -109,8 +109,23 @@ export function AdminDashboard() {
   const [formPriceSelector, setFormPriceSelector] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
-  // ===== Manual Products Tab State =====
-  const [activeTab, setActiveTab] = useState<'stores' | 'manual'>('stores')
+  // ===== Tab State =====
+  const [activeTab, setActiveTab] = useState<'stores' | 'manual' | 'scheduler'>('stores')
+
+  // ===== Scheduler Tab State =====
+  const [schedulerStatus, setSchedulerStatus] = useState<any>(null)
+  const [scanHistory, setScanHistory] = useState<any[]>([])
+  const [schedulerHistoryTotal, setSchedulerHistoryTotal] = useState(0)
+  const [schedulerPage, setSchedulerPage] = useState(1)
+  const [schedulerPerPage] = useState(10)
+  const [schedulerLoading, setSchedulerLoading] = useState(false)
+  const [runNowLoading, setRunNowLoading] = useState(false)
+  const [schedulerConfigHours, setSchedulerConfigHours] = useState<number>(24)
+  const [schedulerConfigCronHour, setSchedulerConfigCronHour] = useState<number>(0)
+  const [schedulerConfigCronMinute, setSchedulerConfigCronMinute] = useState<number>(0)
+  const [schedulerMode, setSchedulerMode] = useState<'interval' | 'cron'>('interval')
+  const [schedulerUpdating, setSchedulerUpdating] = useState(false)
+  const [schedulerError, setSchedulerError] = useState<string | null>(null)
 
   // Manual Products list / search / pagination
   const [manualProducts, setManualProducts] = useState<any[]>([])
@@ -171,6 +186,114 @@ export function AdminDashboard() {
       loadManualProducts()
     }
   }, [activeTab, manualPage, manualCategory, manualCity, manualSearchQuery])
+
+  // ===== Scheduler API Operations =====
+  
+  const loadSchedulerStatus = async () => {
+    try {
+      setSchedulerLoading(true)
+      const { data } = await apiClient.get('/admin/scheduler/status')
+      setSchedulerStatus(data)
+      if (data) {
+        setSchedulerConfigHours(data.interval_hours || 24)
+        setSchedulerConfigCronHour(data.cron_hour || 0)
+        setSchedulerConfigCronMinute(data.cron_minute || 0)
+        setSchedulerMode(data.interval_hours > 0 ? 'interval' : 'cron')
+      }
+      setSchedulerError(null)
+    } catch (err: any) {
+      console.error('Failed to load scheduler status:', err)
+      setSchedulerError('Zamanlayıcı durumu alınamadı.')
+    } finally {
+      setSchedulerLoading(false)
+    }
+  }
+
+  const loadScanHistory = async () => {
+    try {
+      const params = new URLSearchParams()
+      params.append('page', schedulerPage.toString())
+      params.append('per_page', schedulerPerPage.toString())
+      const { data } = await apiClient.get(`/admin/scheduler/history?${params.toString()}`)
+      setScanHistory(data.scans || [])
+      setSchedulerHistoryTotal(data.total || 0)
+    } catch (err) {
+      console.error('Failed to load scan history:', err)
+    }
+  }
+
+  const handleStartScheduler = async () => {
+    try {
+      setSchedulerUpdating(true)
+      const { data } = await apiClient.post('/admin/scheduler/start')
+      setSchedulerStatus(data)
+    } catch (err) {
+      console.error('Failed to start scheduler:', err)
+    } finally {
+      setSchedulerUpdating(false)
+    }
+  }
+
+  const handleStopScheduler = async () => {
+    try {
+      setSchedulerUpdating(true)
+      const { data } = await apiClient.post('/admin/scheduler/stop')
+      setSchedulerStatus(data)
+    } catch (err) {
+      console.error('Failed to stop scheduler:', err)
+    } finally {
+      setSchedulerUpdating(false)
+    }
+  }
+
+  const handleConfigureScheduler = async () => {
+    try {
+      setSchedulerUpdating(true)
+      const payload: any = {
+        enabled: schedulerStatus?.enabled ?? true
+      }
+      if (schedulerMode === 'interval') {
+        payload.interval_hours = schedulerConfigHours
+        payload.cron_hour = 0
+        payload.cron_minute = 0
+      } else {
+        payload.interval_hours = 0
+        payload.cron_hour = schedulerConfigCronHour
+        payload.cron_minute = schedulerConfigCronMinute
+      }
+
+      const { data } = await apiClient.post('/admin/scheduler/configure', payload)
+      setSchedulerStatus(data)
+      alert('Zamanlayıcı başarıyla güncellendi.')
+    } catch (err) {
+      console.error('Failed to configure scheduler:', err)
+      alert('Zamanlayıcı yapılandırılması güncellenemedi.')
+    } finally {
+      setSchedulerUpdating(false)
+    }
+  }
+
+  const handleRunScanNow = async () => {
+    try {
+      setRunNowLoading(true)
+      await apiClient.post('/admin/scheduler/run-now')
+      alert('Manuel tarama başarıyla tetiklendi ve tamamlandı.')
+      loadSchedulerStatus()
+      loadScanHistory()
+    } catch (err) {
+      console.error('Failed to trigger scan:', err)
+      alert('Tarama başlatılamadı.')
+    } finally {
+      setRunNowLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'scheduler') {
+      loadSchedulerStatus()
+      loadScanHistory()
+    }
+  }, [activeTab, schedulerPage])
 
   // Form handlers for Manual Product
   const handleManualFormSubmit = async (e: React.FormEvent) => {
@@ -725,14 +848,14 @@ export function AdminDashboard() {
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Store
               </Button>
-            ) : (
+            ) : activeTab === 'manual' ? (
               <Button
                 onClick={handleOpenAddManualModal}
                 className="gradient-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-9 px-4 text-sm"
               >
                 <Plus className="w-4 h-4 mr-2" /> Ürün Ekle
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
@@ -771,6 +894,19 @@ export function AdminDashboard() {
           >
             <Package className="w-4 h-4" />
             <span>📦 Manuel Stok Girişi</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('scheduler')}
+            className={`flex items-center gap-2 pb-3 text-sm font-semibold tracking-tight transition-all relative
+              ${activeTab === 'scheduler' 
+                ? 'text-primary border-b-2 border-primary font-bold' 
+                : 'text-muted-foreground hover:text-foreground'
+              }
+            `}
+          >
+            <Clock className="w-4 h-4 animate-pulse" />
+            <span>⏰ Zamanlayıcı (Oto Tarama)</span>
           </button>
         </div>
 
@@ -1289,6 +1425,334 @@ export function AdminDashboard() {
                 </Button>
               </div>
             )}
+          </>
+        )}
+
+        {activeTab === 'scheduler' && (
+          <>
+            {/* Scheduler Status and Settings Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Card 1: Status & Quick Controls */}
+              <div className="glass-strong rounded-2xl p-6 shadow-lg border border-border/40 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold tracking-tight flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-indigo-400" />
+                      Zamanlayıcı Durumu
+                    </h3>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                      schedulerStatus?.is_running 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${schedulerStatus?.is_running ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
+                      {schedulerStatus?.is_running ? 'Aktif' : 'Pasif'}
+                    </span>
+                  </div>
+
+                  {schedulerLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="animate-spin text-primary w-8 h-8" />
+                    </div>
+                  ) : schedulerError ? (
+                    <div className="text-destructive text-sm py-4">{schedulerError}</div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="glass rounded-xl p-3 border border-border/20">
+                          <span className="text-[11px] text-muted-foreground block mb-1">Çalışma Modu</span>
+                          <span className="text-sm font-semibold capitalize text-foreground">
+                            {schedulerStatus?.mode === 'interval' 
+                              ? `Aralıklı (${schedulerStatus?.interval_hours} Saat)` 
+                              : `Cron (${String(schedulerStatus?.cron_hour).padStart(2, '0')}:${String(schedulerStatus?.cron_minute).padStart(2, '0')})`}
+                          </span>
+                        </div>
+                        <div className="glass rounded-xl p-3 border border-border/20">
+                          <span className="text-[11px] text-muted-foreground block mb-1">Bir Sonraki Çalışma</span>
+                          <span className="text-sm font-semibold text-foreground">
+                            {schedulerStatus?.next_run_time 
+                              ? new Date(schedulerStatus.next_run_time).toLocaleString('tr-TR') 
+                              : 'Planlanmadı'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {schedulerStatus?.last_scan && (
+                        <div className="glass rounded-xl p-4 border border-border/20 mt-4">
+                          <h4 className="text-xs font-bold mb-2 text-indigo-400 uppercase tracking-wider">Son Otomatik Tarama Özeti</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            <div className="bg-card/30 rounded-lg p-2 border border-border/10">
+                              <span className="text-[10px] text-muted-foreground block">Taranan Ürün</span>
+                              <span className="text-sm font-bold font-mono">{schedulerStatus.last_scan.total_items}</span>
+                            </div>
+                            <div className="bg-card/30 rounded-lg p-2 border border-border/10">
+                              <span className="text-[10px] text-muted-foreground block">Tetiklenen Alarm</span>
+                              <span className="text-sm font-bold font-mono text-emerald-400">{schedulerStatus.last_scan.alerts_triggered}</span>
+                            </div>
+                            <div className="bg-card/30 rounded-lg p-2 border border-border/10">
+                              <span className="text-[10px] text-muted-foreground block">Hata Sayısı</span>
+                              <span className="text-sm font-bold font-mono text-red-400">{schedulerStatus.last_scan.errors}</span>
+                            </div>
+                            <div className="bg-card/30 rounded-lg p-2 border border-border/10">
+                              <span className="text-[10px] text-muted-foreground block">Süre (sn)</span>
+                              <span className="text-sm font-bold font-mono">{schedulerStatus.last_scan.duration_seconds?.toFixed(1) || 0}s</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 mt-6 border-t border-border/20 pt-4">
+                  {schedulerStatus?.is_running ? (
+                    <Button 
+                      onClick={handleStopScheduler} 
+                      disabled={schedulerUpdating}
+                      variant="destructive"
+                      className="flex-1 text-xs font-semibold h-10 transition-all duration-300"
+                    >
+                      <Pause className="w-4 h-4 mr-2" /> Zamanlayıcıyı Durdur
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleStartScheduler} 
+                      disabled={schedulerUpdating}
+                      className="flex-1 text-xs font-semibold h-10 gradient-primary text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Play className="w-4 h-4 mr-2" /> Zamanlayıcıyı Başlat
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    onClick={handleRunScanNow} 
+                    disabled={runNowLoading}
+                    variant="outline"
+                    className="flex-1 text-xs font-semibold h-10 glass border-border/50 hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all duration-300"
+                  >
+                    {runNowLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Tarama Yapılıyor...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" /> Şimdi Tara (Manuel Tetikle)
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Card 2: Configuration & Reschedule */}
+              <div className="glass-strong rounded-2xl p-6 shadow-lg border border-border/40 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight mb-6 flex items-center gap-2">
+                    <Settings2 className="w-5 h-5 text-indigo-400" />
+                    Zamanlayıcı Ayarları
+                  </h3>
+
+                  <div className="space-y-4">
+                    {/* Mode selector */}
+                    <div>
+                      <label className="text-[11px] text-muted-foreground mb-2 block font-medium">Tarama Frekans Modu</label>
+                      <div className="grid grid-cols-2 gap-2 bg-card/40 p-1 rounded-xl border border-border/30">
+                        <button
+                          type="button"
+                          onClick={() => setSchedulerMode('interval')}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                            schedulerMode === 'interval'
+                              ? 'gradient-primary text-white shadow-md'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Saatlik Periyot
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSchedulerMode('cron')}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                            schedulerMode === 'cron'
+                              ? 'gradient-primary text-white shadow-md'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Belirli Saat (Her Gün)
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Mode specific fields */}
+                    {schedulerMode === 'interval' ? (
+                      <div>
+                        <label className="text-[11px] text-muted-foreground mb-1 block font-medium">Tekrarlama Aralığı (Saat)</label>
+                        <select
+                          value={schedulerConfigHours}
+                          onChange={(e) => setSchedulerConfigHours(parseInt(e.target.value))}
+                          className="w-full h-9 rounded-lg border border-border/50 bg-card/50 text-xs px-3 text-foreground outline-none focus:border-primary/50 transition-colors"
+                        >
+                          <option value={1}>Her 1 Saat</option>
+                          <option value={2}>Her 2 Saat</option>
+                          <option value={4}>Her 4 Saat</option>
+                          <option value={6}>Her 6 Saat</option>
+                          <option value={12}>Her 12 Saat</option>
+                          <option value={24}>Her 24 Saat (Günde 1)</option>
+                          <option value={48}>Her 48 Saat (2 Günde 1)</option>
+                          <option value={72}>Her 72 Saat (3 Günde 1)</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] text-muted-foreground mb-1 block font-medium">Saat (0-23)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={23}
+                            value={schedulerConfigCronHour}
+                            onChange={(e) => setSchedulerConfigCronHour(parseInt(e.target.value) || 0)}
+                            className="h-9 text-xs bg-card/50 border-border/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-muted-foreground mb-1 block font-medium">Dakika (0-59)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={59}
+                            value={schedulerConfigCronMinute}
+                            onChange={(e) => setSchedulerConfigCronMinute(parseInt(e.target.value) || 0)}
+                            className="h-9 text-xs bg-card/50 border-border/50"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6 border-t border-border/20 pt-4">
+                  <Button
+                    onClick={handleConfigureScheduler}
+                    disabled={schedulerUpdating}
+                    className="w-full text-xs font-semibold h-10 gradient-primary text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    {schedulerUpdating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Kaydediliyor...
+                      </>
+                    ) : (
+                      'Ayarları Kaydet ve Yeniden Planla'
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Scan History Section */}
+            <div className="glass-strong rounded-2xl p-6 shadow-lg border border-border/40 mt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold tracking-tight flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-indigo-400" />
+                  Tarama Geçmişi
+                </h3>
+                <span className="text-xs text-muted-foreground">Toplam {schedulerHistoryTotal} tarama kaydı</span>
+              </div>
+
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-border/40 text-muted-foreground font-semibold">
+                      <th className="py-3 px-4">Başlangıç</th>
+                      <th className="py-3 px-4">Tetikleyen</th>
+                      <th className="py-3 px-4">Süre</th>
+                      <th className="py-3 px-4 text-center">Taranan Ürün</th>
+                      <th className="py-3 px-4 text-center">Gönderilen Alarm</th>
+                      <th className="py-3 px-4 text-center">Hatalar</th>
+                      <th className="py-3 px-4 text-right">Durum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scanHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-muted-foreground italic">
+                          Henüz hiçbir tarama kaydı bulunmuyor.
+                        </td>
+                      </tr>
+                    ) : (
+                      scanHistory.map((scan) => {
+                        const hasErrors = scan.errors > 0;
+                        const isSuccess = !hasErrors && scan.completed_at;
+                        return (
+                          <tr key={scan.id || scan.started_at} className="border-b border-border/20 hover:bg-card/10 transition-colors">
+                            <td className="py-3 px-4 font-medium text-foreground">
+                              {new Date(scan.started_at).toLocaleString('tr-TR')}
+                            </td>
+                            <td className="py-3 px-4 capitalize">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                scan.trigger === 'manual' 
+                                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                                  : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                              }`}>
+                                {scan.trigger === 'manual' ? 'Manuel' : 'Otomatik'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 font-mono text-muted-foreground">
+                              {scan.duration_seconds ? `${scan.duration_seconds.toFixed(1)} sn` : '-'}
+                            </td>
+                            <td className="py-3 px-4 text-center font-mono font-semibold">
+                              {scan.total_items}
+                            </td>
+                            <td className="py-3 px-4 text-center font-mono text-emerald-400 font-semibold">
+                              {scan.alerts_triggered}
+                            </td>
+                            <td className="py-3 px-4 text-center font-mono text-red-400 font-semibold">
+                              {scan.errors}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                isSuccess 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                              }`}>
+                                {isSuccess ? 'Başarılı' : 'Hatalı'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination for history */}
+              {schedulerHistoryTotal > schedulerPerPage && (
+                <div className="flex items-center justify-center gap-4 pt-4 border-t border-border/20">
+                  <Button
+                    disabled={schedulerPage === 1}
+                    onClick={() => setSchedulerPage(prev => Math.max(1, prev - 1))}
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                  >
+                    Geri
+                  </Button>
+                  <span className="text-xs font-medium">
+                    Sayfa {schedulerPage} / {Math.ceil(schedulerHistoryTotal / schedulerPerPage)}
+                  </span>
+                  <Button
+                    disabled={schedulerPage >= Math.ceil(schedulerHistoryTotal / schedulerPerPage)}
+                    onClick={() => setSchedulerPage(prev => prev + 1)}
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                  >
+                    İleri
+                  </Button>
+                </div>
+              )}
+            </div>
           </>
         )}
       </motion.main>

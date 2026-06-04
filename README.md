@@ -262,6 +262,17 @@ Follow products and receive automated stock/price notifications.
 - **PATCH** `/api/v1/watchlist/{id}/toggle?enabled=...` -> Toggles notification status.
 - **POST** `/api/v1/watchlist/check` -> Triggers background scan check for followed products. Dispatches alert events via SMTP, Telegram, and Webhook callback.
 
+### Watchlist Background Scheduler API (Admin-Only)
+
+Provides endpoints to manage the background periodic watchlist scanner.
+
+- **GET** `/api/v1/admin/scheduler/status` -> Gets scheduler runtime status, current configuration, and last scan summary.
+- **POST** `/api/v1/admin/scheduler/start` -> Starts the background scheduler service.
+- **POST** `/api/v1/admin/scheduler/stop` -> Stops the background scheduler service.
+- **POST** `/api/v1/admin/scheduler/configure` -> Reconfigures scheduler settings (hours interval or cron hour/minute trigger).
+- **POST** `/api/v1/admin/scheduler/run-now` -> Triggers an immediate full scan of all watchlists.
+- **GET** `/api/v1/admin/scheduler/history` -> Returns paginated logs of completed scans.
+
 ---
 
 ## Manual Stock Entry & Map Picker

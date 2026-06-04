@@ -94,6 +94,12 @@ MONGO_URL=mongodb+srv://db_admin:sifreniz@cluster0.abcde.mongodb.net
 DB_NAME=product_locator
 ENV=production
 CORS_ORIGINS=["https://sizin-frontend-adresiniz.vercel.app"]
+
+# Zamanlayıcı (Scheduler) Ayarları (Opsiyonel)
+SCHEDULER_ENABLED=true
+SCHEDULER_CRON_HOUR=3
+SCHEDULER_CRON_MINUTE=0
+SCHEDULER_INTERVAL_HOURS=0
 ```
 
 `Ctrl+O`, `Enter`, `Ctrl+X` tuş kombinasyonlarıyla kaydedip çıkın.
