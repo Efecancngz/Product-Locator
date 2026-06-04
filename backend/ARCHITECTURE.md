@@ -82,7 +82,13 @@ async def search_products(q: str, city: str, district: str) -> SearchResult
 - **Alert Scanner Pipeline (`/watchlist/check`):** Queries and tethers followed items using real-time search logic. Identifies changes like stock transitions (`OUT_OF_STOCK` to `IN_STOCK`) or price drops.
 - **Multi-channel Notifications:** Dispatches email and Telegram notifications via `ReportSystem` Java microservice, and executes a webhook callback to a custom **Webhook URL** defined in settings.
 
-### 5. Parser Layer
+### 5. Watchlist Scheduler (`src/services/scheduler_service.py` & `src/routes/scheduler.py`)
+- **Background Automation:** Runs periodic checks on all watchlist items in the background via `apscheduler` inside FastAPI's async event loop.
+- **Dual-Mode Triggers:** Supports interval-based execution (every N hours) and cron-based execution (at a specific UTC hour and minute, defaults to 03:00 UTC).
+- **Scan Logging (`scan_history`):** Persists metadata of every scan run (start/end time, total items checked, alerts triggered, errors, and product-level alert updates) in MongoDB.
+- **API Control:** Provides admin endpoints to start/stop the scheduler, reschedule runtime triggers, perform manual scans (`run-now`), and retrieve paginated scan logs.
+
+### 6. Parser Layer
 
 | Parser | Condition | Strategy |
 |---|---|---|

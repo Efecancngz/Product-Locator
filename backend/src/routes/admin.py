@@ -383,23 +383,68 @@ class ReportSettingsModel(BaseModel):
 # In-memory fallback for report settings (persisted in MongoDB when available)
 _report_settings_cache: dict = {}
 
-@router.get(
-    "/admin/reports/settings",
-    summary="Get Report & Notification Settings",
-    description="Retrieves saved Telegram/Email/Webhook notification channel configuration.",
-)
-async def get_report_settings():
+async def get_report_settings(mask_secrets: bool = False):
     global _report_settings_cache
-    # Try MongoDB first
+    
+    # Priority 1: Env variables / settings configuration
+    env_config = {}
+    if settings.TELEGRAM_BOT_TOKEN:
+        env_config["telegram_bot_token"] = settings.TELEGRAM_BOT_TOKEN
+    if settings.TELEGRAM_CHAT_ID:
+        env_config["telegram_chat_id"] = settings.TELEGRAM_CHAT_ID
+    if settings.SMTP_HOST:
+        env_config["smtp_host"] = settings.SMTP_HOST
+    if settings.SMTP_PORT:
+        env_config["smtp_port"] = settings.SMTP_PORT
+    if settings.SMTP_USERNAME:
+        env_config["smtp_username"] = settings.SMTP_USERNAME
+    if settings.SMTP_PASSWORD:
+        env_config["smtp_password"] = settings.SMTP_PASSWORD
+    if settings.SMTP_FROM:
+        env_config["smtp_from"] = settings.SMTP_FROM
+    if settings.WEBHOOK_URL:
+        env_config["webhook_url"] = settings.WEBHOOK_URL
+
+    # Priority 2: MongoDB
+    db_config = {}
     if db_service.is_mongodb_active and db_service.db is not None:
         try:
             doc = await db_service.db.report_settings.find_one({"_id": "notification_config"})
             if doc:
                 doc.pop("_id", None)
-                return doc
+                db_config = doc
         except Exception:
             pass
-    return _report_settings_cache or ReportSettingsModel().model_dump()
+
+    # Merge everything (Priority: Env variables > DB > Cache > Model Defaults)
+    merged = {
+        "telegram_bot_token": env_config.get("telegram_bot_token") or db_config.get("telegram_bot_token") or _report_settings_cache.get("telegram_bot_token") or "",
+        "telegram_chat_id": env_config.get("telegram_chat_id") or db_config.get("telegram_chat_id") or _report_settings_cache.get("telegram_chat_id") or "",
+        "smtp_host": env_config.get("smtp_host") or db_config.get("smtp_host") or _report_settings_cache.get("smtp_host") or "smtp.gmail.com",
+        "smtp_port": env_config.get("smtp_port") or db_config.get("smtp_port") or _report_settings_cache.get("smtp_port") or "587",
+        "smtp_username": env_config.get("smtp_username") or db_config.get("smtp_username") or _report_settings_cache.get("smtp_username") or "",
+        "smtp_password": env_config.get("smtp_password") or db_config.get("smtp_password") or _report_settings_cache.get("smtp_password") or "",
+        "smtp_from": env_config.get("smtp_from") or db_config.get("smtp_from") or _report_settings_cache.get("smtp_from") or "",
+        "webhook_url": env_config.get("webhook_url") or db_config.get("webhook_url") or _report_settings_cache.get("webhook_url") or "",
+    }
+
+    if mask_secrets:
+        masked = {**merged}
+        if merged.get("telegram_bot_token"):
+            masked["telegram_bot_token"] = "••••••••" + merged["telegram_bot_token"][-4:] if len(merged["telegram_bot_token"]) > 4 else "••••••••"
+        if merged.get("smtp_password"):
+            masked["smtp_password"] = "••••••••"
+        return masked
+
+    return merged
+
+@router.get(
+    "/admin/reports/settings",
+    summary="Get Report & Notification Settings",
+    description="Retrieves saved Telegram/Email/Webhook notification channel configuration.",
+)
+async def get_report_settings_endpoint():
+    return await get_report_settings(mask_secrets=True)
 
 @router.post(
     "/admin/reports/settings",
@@ -408,7 +453,19 @@ async def get_report_settings():
 )
 async def save_report_settings(payload: ReportSettingsModel):
     global _report_settings_cache
+    
+    # Load raw existing config (without masking)
+    existing = await get_report_settings(mask_secrets=False)
+    
+    # Convert payload to dict
     data = payload.model_dump()
+    
+    # If the submitted values are masked, restore the original unmasked values
+    if data.get("telegram_bot_token") and data["telegram_bot_token"].startswith("•"):
+        data["telegram_bot_token"] = existing.get("telegram_bot_token", "")
+    if data.get("smtp_password") and data["smtp_password"].startswith("•"):
+        data["smtp_password"] = existing.get("smtp_password", "")
+
     _report_settings_cache = data
 
     # Persist to MongoDB if available

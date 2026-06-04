@@ -94,6 +94,12 @@ MONGO_URL=mongodb+srv://db_admin:your_secure_password@cluster0.abcde.mongodb.net
 DB_NAME=product_locator
 ENV=production
 CORS_ORIGINS=["https://your-frontend.vercel.app"]
+
+# Scheduler Defaults (Optional)
+SCHEDULER_ENABLED=true
+SCHEDULER_CRON_HOUR=3
+SCHEDULER_CRON_MINUTE=0
+SCHEDULER_INTERVAL_HOURS=0
 ```
 
 Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).

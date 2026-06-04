@@ -738,6 +738,127 @@ class DatabaseService:
             items.append(item)
         return items
 
+    # ==========================================
+    # SCAN HISTORY OPERATIONS (Scheduler)
+    # ==========================================
+
+    async def add_scan_history(self, scan_data: Dict[str, Any]) -> Optional[str]:
+        """Log a completed scan run to history."""
+        scan_data.setdefault("created_at", datetime.now(timezone.utc))
+
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                result = await self.db.scan_history.insert_one(scan_data)
+                scan_id = str(result.inserted_id)
+                logger.info(f"[DBService] Scan history logged to MongoDB: {scan_id}")
+                return scan_id
+            except Exception as e:
+                logger.error(f"[DBService] Failed to log scan history to MongoDB: {e}")
+                return None
+
+        # B. In-Memory Fallback
+        import uuid
+        scan_id = str(uuid.uuid4())[:8]
+        scan_data["_id"] = scan_id
+        if not hasattr(self, '_scan_history_cache'):
+            self._scan_history_cache: List[Dict[str, Any]] = []
+        self._scan_history_cache.append(scan_data)
+        # Keep only the last 100 entries in memory
+        if len(self._scan_history_cache) > 100:
+            self._scan_history_cache = self._scan_history_cache[-100:]
+        logger.info(f"[DBService] Scan history logged to In-Memory: {scan_id}")
+        return scan_id
+
+    async def get_scan_history(self, limit: int = 20, skip: int = 0) -> tuple:
+        """Get paginated scan history. Returns (scans, total_count)."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                total = await self.db.scan_history.count_documents({})
+                cursor = self.db.scan_history.find({}).sort("created_at", -1).skip(skip).limit(limit)
+                scans = await cursor.to_list(length=limit)
+                for s in scans:
+                    if "_id" in s:
+                        s["id"] = str(s.pop("_id"))
+                return scans, total
+            except Exception as e:
+                logger.error(f"[DBService] Failed to get scan history from MongoDB: {e}")
+                return [], 0
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_scan_history_cache'):
+            self._scan_history_cache = []
+        sorted_scans = sorted(
+            self._scan_history_cache,
+            key=lambda x: x.get("created_at", datetime.min),
+            reverse=True
+        )
+        total = len(sorted_scans)
+        paginated = sorted_scans[skip:skip + limit]
+        for s in paginated:
+            if "_id" in s and "id" not in s:
+                s["id"] = s["_id"]
+        return paginated, total
+
+    async def get_last_scan(self) -> Optional[Dict[str, Any]]:
+        """Get the most recent scan result."""
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                doc = await self.db.scan_history.find_one(
+                    sort=[("created_at", -1)]
+                )
+                if doc:
+                    doc["id"] = str(doc.pop("_id"))
+                    return doc
+            except Exception as e:
+                logger.error(f"[DBService] Failed to get last scan from MongoDB: {e}")
+            return None
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_scan_history_cache') or not self._scan_history_cache:
+            return None
+        sorted_scans = sorted(
+            self._scan_history_cache,
+            key=lambda x: x.get("created_at", datetime.min),
+            reverse=True
+        )
+        result = dict(sorted_scans[0])
+        if "_id" in result and "id" not in result:
+            result["id"] = result["_id"]
+        return result
+
+    async def cleanup_old_scans(self, days: int = 30) -> int:
+        """Remove scan history entries older than N days."""
+        from datetime import timedelta
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+        # A. MongoDB Mode
+        if self.is_mongodb_active and self.db is not None:
+            try:
+                result = await self.db.scan_history.delete_many(
+                    {"created_at": {"$lt": cutoff}}
+                )
+                logger.info(f"[DBService] Cleaned up {result.deleted_count} old scan records.")
+                return result.deleted_count
+            except Exception as e:
+                logger.error(f"[DBService] Failed to cleanup old scans: {e}")
+                return 0
+
+        # B. In-Memory Fallback
+        if not hasattr(self, '_scan_history_cache'):
+            return 0
+        original_len = len(self._scan_history_cache)
+        self._scan_history_cache = [
+            s for s in self._scan_history_cache
+            if s.get("created_at", datetime.min) >= cutoff
+        ]
+        deleted = original_len - len(self._scan_history_cache)
+        if deleted > 0:
+            logger.info(f"[DBService] Cleaned up {deleted} old scan records from memory.")
+        return deleted
+
 # Singleton
 db_service = DatabaseService()
 

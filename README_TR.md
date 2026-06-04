@@ -262,6 +262,17 @@ Arama sonuçlarındaki ürünlerin fiyat ve stok değişimlerini izlemek ve bild
 - **PATCH** `/api/v1/watchlist/{id}/toggle?enabled=...` -> Ürün bildirim durumunu açar/kapatır.
 - **POST** `/api/v1/watchlist/check` -> Takip edilen tüm ürünleri arka planda güncel aramayla denetler. Fiyat düşüşü veya stok girişi tespit edilirse SMTP/Telegram bildirimleri ve harici Webhook URL'sine bildirim gönderir.
 
+### Takip Listesi Zamanlayıcı (Scheduler) API (Sadece Admin)
+
+Arka planda periyodik olarak çalışan otomatik tarayıcıyı yönetmek için API uç noktaları sunar.
+
+- **GET** `/api/v1/admin/scheduler/status` -> Zamanlayıcının çalışma durumunu, mevcut yapılandırmasını ve son tarama özetini getirir.
+- **POST** `/api/v1/admin/scheduler/start` -> Zamanlayıcı arka plan servisini başlatır.
+- **POST** `/api/v1/admin/scheduler/stop` -> Zamanlayıcı arka plan servisini durdurur.
+- **POST** `/api/v1/admin/scheduler/configure` -> Zamanlayıcı ayarlarını (saatlik periyot veya günün belirli bir saatindeki cron tetikleyicisi) yeniden yapılandırır.
+- **POST** `/api/v1/admin/scheduler/run-now` -> Beklemeden anlık olarak tüm takip listesini taratır.
+- **GET** `/api/v1/admin/scheduler/history` -> Tamamlanmış taramaların geçmiş kayıtlarını sayfalı olarak döndürür.
+
 ---
 
 ## Proje Yapısı

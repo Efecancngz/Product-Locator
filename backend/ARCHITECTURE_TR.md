@@ -82,7 +82,13 @@ async def search_products(q: str, city: str, district: str) -> SearchResult
 - **Stok & Fiyat Değişim Tespiti (`/watchlist/check`):** Takipteki tüm ürünleri arka planda güncel aramayla sorgular. `OUT_OF_STOCK` durumundan `IN_STOCK` durumuna geçişleri veya fiyat düşüşlerini algılar.
 - **Çok Kanallı Bildirim Entegrasyonu:** Değişiklik tespit edildiğinde `ReportSystem` (SMTP/Telegram) üzerinden uyarı fırlatır ve admin panelinde tanımlı olan harici **Webhook URL**'sine HTTP POST payload'ı gönderir.
 
-### 5. Parser Katmanı
+### 5. Watchlist Zamanlayıcı (`src/services/scheduler_service.py` & `src/routes/scheduler.py`)
+- **Arka Plan Otomasyonu:** Takip listesindeki tüm ürünleri `apscheduler` yardımıyla FastAPI'nin asenkron event loop'u içerisinde arka planda periyodik olarak tarar.
+- **Çift Modlu Çalışma:** Saatlik periyot (N saatte bir) veya Cron modunu (her gün belirli bir UTC saat/dakikasında, varsayılan 03:00 UTC) destekler.
+- **Tarama Geçmişi (`scan_history`):** Her taramanın metaverilerini (başlangıç/bitiş zamanı, taranan ürün sayısı, tetiklenen alarmlar, oluşan hatalar ve ürün düzeyindeki detaylı güncellemeler) MongoDB'de saklar.
+- **API Kontrolü:** Yönetici paneli için zamanlayıcıyı başlatma/durdurma, yeniden planlama, anlık manuel tarama tetikleme (`run-now`) ve sayfalı geçmiş listeleme uç noktaları sunar.
+
+### 6. Parser Katmanı
 
 | Parser | Koşul | Yöntem |
 |---|---|---|

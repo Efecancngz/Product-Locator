@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.config.settings import settings
-from src.routes import search, admin, watchlist
+from src.routes import search, admin, watchlist, scheduler
 import sys
 import asyncio
 import logging
@@ -25,6 +25,11 @@ tags_metadata = [
         "description": "SaaS Admin Dashboard operations. Includes dynamic e-commerce retail store CRUD management, "
                        "live scraper simulators, system diagnostic telemetry pings, notification settings (Telegram, SMTP Email), "
                        "and manual physical branch product stock registry management with Pigeon-Map coordinate selections.",
+    },
+    {
+        "name": "scheduler",
+        "description": "Background scheduler operations. Manage automatic watchlist stock/price scan jobs, "
+                       "configure cron or interval schedules, trigger manual scans, and view scan history.",
     },
 ]
 
@@ -121,14 +126,27 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(watchlist.router, prefix="/api/v1")
+app.include_router(scheduler.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
 async def startup_db_client():
     from src.services.db_service import db_service
     from src.services.redis_service import redis_service
+    from src.services.scheduler_service import scheduler_service
     await db_service.connect()
     await redis_service.connect()
+    # Start background scheduler for automatic watchlist scans
+    try:
+        await scheduler_service.start()
+    except Exception as e:
+        logger.warning(f"Scheduler failed to start: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_services():
+    from src.services.scheduler_service import scheduler_service
+    scheduler_service.stop()
 
 
 @app.get("/", tags=["health"], summary="Server Health Check")
