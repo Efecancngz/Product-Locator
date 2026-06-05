@@ -4,7 +4,8 @@ import {
   ArrowLeft, Store, Plus, Trash2, Edit3, Globe, FolderOpen, 
   ExternalLink, X, Sparkles, Check, AlertCircle, Loader2, Search,
   Cpu, Database, Activity, Play, Terminal, Bell, Send, Mail, MessageCircle,
-  Settings2, CheckCircle2, MapPin, Package, Clock, RefreshCw, Pause, Calendar
+  Settings2, CheckCircle2, MapPin, Package, Clock, RefreshCw, Pause, Calendar,
+  FileSpreadsheet, FileText
 } from 'lucide-react'
 import { apiClient } from '../api/client'
 import { Button } from './ui/button'
@@ -126,6 +127,9 @@ export function AdminDashboard() {
   const [schedulerMode, setSchedulerMode] = useState<'interval' | 'cron'>('interval')
   const [schedulerUpdating, setSchedulerUpdating] = useState(false)
   const [schedulerError, setSchedulerError] = useState<string | null>(null)
+
+  // ===== Export State =====
+  const [exportDownloading, setExportDownloading] = useState<string | null>(null)
 
   // Manual Products list / search / pagination
   const [manualProducts, setManualProducts] = useState<any[]>([])
@@ -294,6 +298,33 @@ export function AdminDashboard() {
       loadScanHistory()
     }
   }, [activeTab, schedulerPage])
+
+  // ===== Export Download Helper =====
+  const handleExportDownload = async (endpoint: string, format: 'excel' | 'pdf', label: string) => {
+    const key = `${endpoint}-${format}`
+    setExportDownloading(key)
+    try {
+      const separator = endpoint.includes('?') ? '&' : '?'
+      const response = await apiClient.get(`${endpoint}${separator}format=${format}`, {
+        responseType: 'blob'
+      })
+      const blob = new Blob([response.data])
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const ext = format === 'excel' ? '.xlsx' : '.pdf'
+      a.download = `${label}${ext}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err) {
+      console.error(`Export failed (${format}):`, err)
+      alert(`Dışa aktarma başarısız oldu. Lütfen tekrar deneyin.`)
+    } finally {
+      setExportDownloading(null)
+    }
+  }
 
   // Form handlers for Manual Product
   const handleManualFormSubmit = async (e: React.FormEvent) => {
@@ -1088,14 +1119,39 @@ export function AdminDashboard() {
               </div>
 
               {/* Search bar inside admin */}
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search store brand..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-xs glass border-border/50 focus-visible:ring-primary focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent placeholder:text-muted-foreground/45"
-                />
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="relative flex-1 md:w-80">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder="Search store brand..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9 text-xs glass border-border/50 focus-visible:ring-primary focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent placeholder:text-muted-foreground/45"
+                  />
+                </div>
+                {/* Export Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[11px] font-semibold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 transition-all gap-1.5"
+                    disabled={exportDownloading === '/export/stores-excel'}
+                    onClick={() => handleExportDownload('/export/stores', 'excel', 'magaza_listesi')}
+                  >
+                    {exportDownloading === '/export/stores-excel' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+                    Excel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[11px] font-semibold border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all gap-1.5"
+                    disabled={exportDownloading === '/export/stores-pdf'}
+                    onClick={() => handleExportDownload('/export/stores', 'pdf', 'magaza_listesi')}
+                  >
+                    {exportDownloading === '/export/stores-pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                    PDF
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -1276,7 +1332,7 @@ export function AdminDashboard() {
               </div>
 
               {/* Search bar & City filter inside admin */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
                 <div className="relative w-full sm:w-48">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
@@ -1294,6 +1350,29 @@ export function AdminDashboard() {
                     onChange={(e) => setManualCity(e.target.value)}
                     className="pl-9 h-9 text-xs glass border-border/50 focus-visible:ring-primary bg-transparent placeholder:text-muted-foreground/45"
                   />
+                </div>
+                {/* Export Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[11px] font-semibold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 transition-all gap-1.5"
+                    disabled={exportDownloading === '/export/manual-products-excel'}
+                    onClick={() => handleExportDownload('/export/manual-products', 'excel', 'manuel_urunler')}
+                  >
+                    {exportDownloading === '/export/manual-products-excel' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+                    Excel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[11px] font-semibold border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all gap-1.5"
+                    disabled={exportDownloading === '/export/manual-products-pdf'}
+                    onClick={() => handleExportDownload('/export/manual-products', 'pdf', 'manuel_urunler')}
+                  >
+                    {exportDownloading === '/export/manual-products-pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                    PDF
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1430,6 +1509,31 @@ export function AdminDashboard() {
 
         {activeTab === 'scheduler' && (
           <>
+            {/* Export Buttons for Scheduler */}
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-xs text-muted-foreground mr-2">Tarama Geçmişi Dışa Aktar:</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-[11px] font-semibold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 transition-all gap-1.5"
+                disabled={exportDownloading === '/export/scan-history-excel'}
+                onClick={() => handleExportDownload('/export/scan-history', 'excel', 'tarama_gecmisi')}
+              >
+                {exportDownloading === '/export/scan-history-excel' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+                Excel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-[11px] font-semibold border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all gap-1.5"
+                disabled={exportDownloading === '/export/scan-history-pdf'}
+                onClick={() => handleExportDownload('/export/scan-history', 'pdf', 'tarama_gecmisi')}
+              >
+                {exportDownloading === '/export/scan-history-pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                PDF
+              </Button>
+            </div>
+
             {/* Scheduler Status and Settings Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               

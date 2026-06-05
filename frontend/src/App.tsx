@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
-import { Search, Store, List, Map as MapIcon, Loader2, Sparkles, Bell, BellOff, Trash2, X, Star } from 'lucide-react'
+import { Search, Store, List, Map as MapIcon, Loader2, Sparkles, Bell, BellOff, Trash2, X, Star, FileSpreadsheet, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useProductSearch } from '@/hooks/useProductSearch'
@@ -39,6 +39,7 @@ function SearchApp() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [scanMessage, setScanMessage] = useState<string | null>(null)
+  const [searchExportLoading, setSearchExportLoading] = useState<string | null>(null)
 
   // Load watchlist on mount
   useEffect(() => {
@@ -436,6 +437,90 @@ function SearchApp() {
               className="flex-1 w-full pt-28 px-4 pb-4 container mx-auto"
               style={{ minHeight: '500px' }}
             >
+              {/* Export Buttons for Search Results */}
+              {data && data.found_products.length > 0 && (
+                <div className="flex items-center justify-end gap-2 mb-4">
+                  <span className="text-xs text-muted-foreground mr-1">Sonuçları Dışa Aktar:</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[11px] font-semibold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 transition-all gap-1.5"
+                    disabled={searchExportLoading === 'excel'}
+                    onClick={async () => {
+                      setSearchExportLoading('excel')
+                      try {
+                        const payload = {
+                          query: data.query,
+                          items: data.found_products.map((p: any) => ({
+                            product_name: p.product_name,
+                            price: p.price,
+                            currency: p.currency,
+                            stock_status: p.stock_status,
+                            store_name: p.store_location?.store_name || '',
+                            city: p.store_location?.city || '',
+                            district: p.store_location?.district || '',
+                            branch: p.store_location?.branch || '',
+                            source_url: p.source_url
+                          }))
+                        }
+                        const response = await apiClient.post('/export/search-results?format=excel', payload, { responseType: 'blob' })
+                        const blob = new Blob([response.data])
+                        const url = window.URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = `arama_sonuclari_${data.query.slice(0,20).replace(/\s/g, '_')}.xlsx`
+                        document.body.appendChild(a)
+                        a.click()
+                        window.URL.revokeObjectURL(url)
+                        document.body.removeChild(a)
+                      } catch (err) { console.error('Export failed:', err); alert('Dışa aktarma başarısız oldu.') }
+                      finally { setSearchExportLoading(null) }
+                    }}
+                  >
+                    {searchExportLoading === 'excel' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+                    Excel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[11px] font-semibold border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all gap-1.5"
+                    disabled={searchExportLoading === 'pdf'}
+                    onClick={async () => {
+                      setSearchExportLoading('pdf')
+                      try {
+                        const payload = {
+                          query: data.query,
+                          items: data.found_products.map((p: any) => ({
+                            product_name: p.product_name,
+                            price: p.price,
+                            currency: p.currency,
+                            stock_status: p.stock_status,
+                            store_name: p.store_location?.store_name || '',
+                            city: p.store_location?.city || '',
+                            district: p.store_location?.district || '',
+                            branch: p.store_location?.branch || '',
+                            source_url: p.source_url
+                          }))
+                        }
+                        const response = await apiClient.post('/export/search-results?format=pdf', payload, { responseType: 'blob' })
+                        const blob = new Blob([response.data])
+                        const url = window.URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = `arama_sonuclari_${data.query.slice(0,20).replace(/\s/g, '_')}.pdf`
+                        document.body.appendChild(a)
+                        a.click()
+                        window.URL.revokeObjectURL(url)
+                        document.body.removeChild(a)
+                      } catch (err) { console.error('Export failed:', err); alert('Dışa aktarma başarısız oldu.') }
+                      finally { setSearchExportLoading(null) }
+                    }}
+                  >
+                    {searchExportLoading === 'pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                    PDF
+                  </Button>
+                </div>
+              )}
               {isLoading ? (
                 <div className="w-full h-full flex items-center justify-center min-h-[400px]">
                   <div className="text-center">

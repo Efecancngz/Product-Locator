@@ -273,6 +273,17 @@ Arka planda periyodik olarak çalışan otomatik tarayıcıyı yönetmek için A
 - **POST** `/api/v1/admin/scheduler/run-now` -> Beklemeden anlık olarak tüm takip listesini taratır.
 - **GET** `/api/v1/admin/scheduler/history` -> Tamamlanmış taramaların geçmiş kayıtlarını sayfalı olarak döndürür.
 
+### Excel ve PDF Rapor Dışa Aktarma (Export) API
+
+Arama sonuçlarını ve admin listelerini Excel (.xlsx) ve PDF (.pdf) formatlarında indirmeyi sağlayan uç noktalar.
+
+- **POST** `/api/v1/export/search-results?format=...` -> Arama sonuçlarını Excel veya PDF olarak dışa aktarır.
+- **GET** `/api/v1/export/stores?format=...` -> (Sadece Admin) Kayıtlı tüm e-ticaret mağazalarını indirir.
+- **GET** `/api/v1/export/manual-products?format=...` -> (Sadece Admin) Manuel eklenen ürünleri indirir.
+- **GET** `/api/v1/export/watchlist?format=...` -> Takip listesindeki (Watchlist) ürünleri indirir.
+- **GET** `/api/v1/export/scan-history?format=...` -> (Sadece Admin) Zamanlanmış tarayıcı geçmişini indirir.
+- **POST** `/api/v1/export/email` -> (Sadece Admin) Raporları ReportSystem üzerinden yönetici e-posta adresine gönderir.
+
 ---
 
 ## Proje Yapısı

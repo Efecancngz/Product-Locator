@@ -273,6 +273,17 @@ Provides endpoints to manage the background periodic watchlist scanner.
 - **POST** `/api/v1/admin/scheduler/run-now` -> Triggers an immediate full scan of all watchlists.
 - **GET** `/api/v1/admin/scheduler/history` -> Returns paginated logs of completed scans.
 
+### Export & Reports API
+
+Endpoints to generate and download Excel (.xlsx) and PDF (.pdf) reports.
+
+- **POST** `/api/v1/export/search-results?format=...` -> Exports current search query results as Excel or PDF.
+- **GET** `/api/v1/export/stores?format=...` -> (Admin-Only) Exports all registered e-commerce stores.
+- **GET** `/api/v1/export/manual-products?format=...` -> (Admin-Only) Exports manually configured retail products.
+- **GET** `/api/v1/export/watchlist?format=...` -> Exports followed watchlist items.
+- **GET** `/api/v1/export/scan-history?format=...` -> (Admin-Only) Exports background scan execution history.
+- **POST** `/api/v1/export/email` -> (Admin-Only) Dispatches generated reports to an administrator's email address via the ReportSystem microservice.
+
 ---
 
 ## Manual Stock Entry & Map Picker
