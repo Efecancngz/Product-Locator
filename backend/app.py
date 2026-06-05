@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.config.settings import settings
-from src.routes import search, admin, watchlist, scheduler
+from src.routes import search, admin, watchlist, scheduler, export
 import sys
 import asyncio
 import logging
@@ -30,6 +30,11 @@ tags_metadata = [
         "name": "scheduler",
         "description": "Background scheduler operations. Manage automatic watchlist stock/price scan jobs, "
                        "configure cron or interval schedules, trigger manual scans, and view scan history.",
+    },
+    {
+        "name": "export",
+        "description": "Export operations. Generate and download Excel/PDF reports of search results, "
+                       "store configurations, manual products, watchlist items, and scan history.",
     },
 ]
 
@@ -127,6 +132,7 @@ app.include_router(search.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(watchlist.router, prefix="/api/v1")
 app.include_router(scheduler.router, prefix="/api/v1")
+app.include_router(export.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
