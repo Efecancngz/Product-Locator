@@ -139,7 +139,7 @@ Standart fiyat karşılaştırma motorlarının (Akakçe, Cimri vb.) aksine **Pr
 
 ```bash
 # Repoyu klonla
-git clone <repo-url>
+git clone https://github.com/Efecancngz/Product-Locator.git
 cd Product-Locator
 
 # Backend
