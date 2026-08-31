@@ -146,7 +146,7 @@ Unlike standard price comparison engines (such as Akakçe or Cimri) which primar
 
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/Efecancngz/Product-Locator.git
 cd Product-Locator
 
 # Backend Installation
